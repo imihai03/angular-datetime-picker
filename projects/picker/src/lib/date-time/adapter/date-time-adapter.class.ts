@@ -36,12 +36,12 @@ export abstract class DateTimeAdapter<T> {
 
 	public firstMonthOfTheYear: number = 0;
 	public firstDayOfTheWeek: number = 0;
-    
+
     /** total milliseconds in a day. */
     protected readonly millisecondsInDay = 86400000;
 
     /** total milliseconds in a minute. */
-    protected readonly milliseondsInMinute = 60000;
+    protected readonly millisecondsInMinute = 60000;
 
     /**
      * Get the year of the given date

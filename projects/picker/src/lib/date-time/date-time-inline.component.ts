@@ -202,13 +202,13 @@ export class OwlDateTimeInlineComponent<T> extends OwlDateTime<T>
         this.selected = value;
     }
 
-    private _values: T[] = [];
+    private _values: (T | null)[] = [];
     @Input()
     get values() {
         return this._values;
     }
 
-    set values(values: T[]) {
+    set values(values: (T | null)[]) {
         if (values && values.length > 0) {
             values = values.map(v => {
                 v = this.dateTimeAdapter.deserialize(v);

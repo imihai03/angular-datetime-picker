@@ -1,19 +1,7 @@
 {
-    "name": "@danielmoncada/angular-datetime-picker",
+    "name": "@cislink/angular-datetime-picker",
     "version": "21.0.0",
     "description": "Angular Date Time Picker",
-    "keywords": [
-        "Angular",
-        "datepicker",
-        "date picker",
-        "timepicker",
-        "time picker",
-        "datetime picker",
-        "date time picker",
-        "material",
-        "ngx"
-    ],
-    "author": "Maintained and updated by Daniel Moncada, original implementatiom by Daniel Pan",
     "license": "MIT",
     "repository": {
         "type": "git",
@@ -24,9 +12,10 @@
         "access": "public"
     },
     "peerDependencies": {
-        "@angular/common": "^19.0.0 || ^20.0.0 || ^21.0.0",
-        "@angular/core": "^19.0.0 || ^20.0.0 || ^21.0.0",
-        "@angular/cdk": "^19.0.0 || ^20.0.0 || ^21.0.0"
+        "@angular/common": "^21.0.0",
+        "@angular/core": "^21.0.0",
+        "@angular/cdk": "^21.0.0",
+        "luxon": "^3.7.2"
     },
     "dependencies": {
         "tslib": "^2.6.2"

@@ -499,32 +499,35 @@ export class OwlMonthViewComponent<T>
         this.todayDate = null;
         this.weekNumbers = [];
 
-        // the first weekday of the month
         const startWeekdayOfMonth = this.dateTimeAdapter.getDay(
             this.firstDateOfMonth
         );
         const firstDayOfWeek = this.firstDayOfWeek;
 
-        // the amount of days from the first date of the month
-        // if it is < 0, it means the date is in previous month
         let daysDiff =
-            0 -
-            ((startWeekdayOfMonth + (DAYS_PER_WEEK - firstDayOfWeek)) %
-                DAYS_PER_WEEK);
+                0 -
+                ((startWeekdayOfMonth + (DAYS_PER_WEEK - firstDayOfWeek)) %
+                    DAYS_PER_WEEK);
 
-        // the index of cell that contains the first date of the month
         this.firstRowOffset = Math.abs(daysDiff);
 
         this._days = [];
+
         for (let i = 0; i < WEEKS_PER_VIEW; i++) {
             const week = [];
+            const weekStartDate = this.dateTimeAdapter.addCalendarDays(
+                this.firstDateOfMonth,
+                daysDiff
+            );
+
             for (let j = 0; j < DAYS_PER_WEEK; j++) {
                 const date = this.dateTimeAdapter.addCalendarDays(
                     this.firstDateOfMonth,
                     daysDiff
                 );
+
                 const dateCell = this.createDateCell(date, daysDiff);
-                // check if the date is today
+
                 if (
                     this.dateTimeAdapter.isSameDay(
                         this.dateTimeAdapter.now(),
@@ -537,12 +540,15 @@ export class OwlMonthViewComponent<T>
                 week.push(dateCell);
                 daysDiff += 1;
             }
+
             this._days.push(week);
+
             if (this.showCalendarWeeks) {
-                const weekNumber = this.getISOWeek(new Date(week[0].ariaLabel));
+                const weekNumber = this.getISOWeekFromDate(weekStartDate);
                 this.weekNumbers.push(weekNumber);
             }
         }
+
         this.setSelectedDates();
     }
 
@@ -629,7 +635,7 @@ export class OwlMonthViewComponent<T>
      * Check if the give dates are none-null and in the same month
      */
     public isSameMonth(dateLeft: T, dateRight: T): boolean {
-        return !!(
+        return (
             dateLeft &&
             dateRight &&
             this.dateTimeAdapter.isValid(dateLeft) &&
@@ -639,6 +645,22 @@ export class OwlMonthViewComponent<T>
             this.dateTimeAdapter.getMonth(dateLeft) ===
                 this.dateTimeAdapter.getMonth(dateRight)
         );
+    }
+
+    private getISOWeekFromDate(date: T): number {
+        const jsDate = new Date(Date.UTC(
+            this.dateTimeAdapter.getYear(date),
+            this.dateTimeAdapter.getMonth(date),
+            this.dateTimeAdapter.getDate(date),
+        ));
+
+        jsDate.setUTCDate(
+            jsDate.getUTCDate() + 4 - (jsDate.getUTCDay() || 7)
+        );
+
+        const yearStart = new Date(Date.UTC(jsDate.getUTCFullYear(), 0, 1));
+
+        return Math.ceil((((+jsDate - +yearStart) / 86400000) + 1) / 7);
     }
 
     /**

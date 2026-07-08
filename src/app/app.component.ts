@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '../../projects/picker/src/public_api';
+import { OwlDateTimeModule, OwlLuxonDateTimeModule } from '../../projects/picker/src/public_api';
 
 /** One day in milliseconds */
 const ONE_DAY = 24 * 60 * 60 * 1000;
@@ -14,7 +14,7 @@ const ONE_DAY = 24 * 60 * 60 * 1000;
   imports: [
     FormsModule,
     OwlDateTimeModule,
-    OwlNativeDateTimeModule
+    OwlLuxonDateTimeModule
   ]
 })
 export class AppComponent {

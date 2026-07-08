@@ -2,325 +2,355 @@
  * unix-timestamp-date-time-adapter.class
  */
 
-import {Inject, Injectable, Optional} from '@angular/core';
-import {DateTimeAdapter, OWL_DATE_TIME_LOCALE} from '../date-time-adapter.class';
-import {Platform} from '@angular/cdk/platform';
-import {range} from '../../../utils/array.utils';
-import {createDate, getNumDaysInMonth} from '../../../utils/date.utils';
-import {DEFAULT_DATE_NAMES, DEFAULT_DAY_OF_WEEK_NAMES, DEFAULT_MONTH_NAMES, SUPPORTS_INTL_API} from '../../../utils/constants';
+import { Inject, Injectable, Optional } from '@angular/core';
+import { DateTime, Info, Settings } from 'luxon';
+
+import {
+    DateTimeAdapter,
+    OWL_DATE_TIME_LOCALE,
+} from '../date-time-adapter.class';
 
 @Injectable()
 export class UnixTimestampDateTimeAdapter extends DateTimeAdapter<number> {
-	public firstMonthOfTheYear: number = 0;
-	public firstDayOfTheWeek: number = 0;
-    
-    constructor(
+    public firstMonthOfTheYear = 0;
+
+    /**
+     * Picker expects:
+     * 0 - Sunday
+     * 1 - Monday
+     * ...
+     * 6 - Saturday
+     */
+    public firstDayOfTheWeek = 0;
+
+    public constructor(
         @Optional()
         @Inject(OWL_DATE_TIME_LOCALE)
         private owlDateTimeLocale: string,
-        platform: Platform
     ) {
         super();
-        super.setLocale(owlDateTimeLocale);
 
-        // IE does its own time zone correction, so we disable this on IE.
-        this.useUtcForDisplay = !platform.TRIDENT;
-        this._clampDate = platform.TRIDENT || platform.EDGE;
+        this.setLocale(owlDateTimeLocale || Settings.defaultLocale || 'ru');
     }
 
-    /** Whether to clamp the date between 1 and 9999 to avoid IE and Edge errors. */
-    private readonly _clampDate: boolean;
-
-    /**
-     * Whether to use `timeZone: 'utc'` with `Intl.DateTimeFormat` when formatting dates.
-     * Without this `Intl.DateTimeFormat` sometimes chooses the wrong timeZone, which can throw off
-     * the result. (e.g. in the en-US locale `new Date(1800, 7, 14).toLocaleDateString()`
-     * will produce `'8/13/1800'`.
-     */
-    useUtcForDisplay: boolean;
-
-    /**
-     * Strip out unicode LTR and RTL characters. Edge and IE insert these into formatted dates while
-     * other browsers do not. We remove them to make output consistent and because they interfere with
-     * date parsing.
-     */
-    private static search_ltr_rtl_pattern = '/[\u200e\u200f]/g';
-    private static stripDirectionalityCharacters(str: string) {
-        return str.replace(UnixTimestampDateTimeAdapter.search_ltr_rtl_pattern, '');
+    public getYear(date: number): number {
+        return this.fromTimestamp(date).year;
     }
 
     /**
-     * When converting Date object to string, javascript built-in functions may return wrong
-     * results because it applies its internal DST rules. The DST rules around the world change
-     * very frequently, and the current valid rule is not always valid in previous years though.
-     * We work around this problem building a new Date object which has its internal UTC
-     * representation with the local date and time.
+     * Picker expects:
+     * 0 - January
+     * 11 - December
+     *
+     * Luxon uses:
+     * 1 - January
+     * 12 - December
      */
-    private static _format(dtf: Intl.DateTimeFormat, date: Date) {
-        const d = new Date(
-            Date.UTC(
-                date.getFullYear(),
-                date.getMonth(),
-                date.getDate(),
-                date.getHours(),
-                date.getMinutes(),
-                date.getSeconds(),
-                date.getMilliseconds()
-            )
-        );
-        return dtf.format(d);
+    public getMonth(date: number): number {
+        return this.fromTimestamp(date).month - 1;
     }
 
-    addCalendarDays(date: number, amount: number): number {
-        const result = new Date(date);
-        amount = Number(amount);
-        result.setDate(result.getDate() + amount);
-        return result.getTime();
+    /**
+     * Picker expects:
+     * 0 - Sunday
+     * 6 - Saturday
+     *
+     * Luxon weekday:
+     * 1 - Monday
+     * 7 - Sunday
+     */
+    public getDay(date: number): number {
+        return this.fromTimestamp(date).weekday % 7;
     }
 
-    addCalendarMonths(date: number, amount: number): number {
-        const result = new Date(date);
-        amount = Number(amount);
-
-        const desiredMonth = result.getMonth() + amount;
-        const dateWithDesiredMonth = new Date(0);
-        dateWithDesiredMonth.setFullYear(result.getFullYear(), desiredMonth, 1);
-        dateWithDesiredMonth.setHours(0, 0, 0, 0);
-
-        const daysInMonth = this.getNumDaysInMonth(dateWithDesiredMonth.getTime());
-        // Set the last day of the new month
-        // if the original date was the last day of the longer month
-        result.setMonth(desiredMonth, Math.min(daysInMonth, result.getDate()));
-        return result.getTime();
+    public getDate(date: number): number {
+        return this.fromTimestamp(date).day;
     }
 
-    addCalendarYears(date: number, amount: number): number {
-        return this.addCalendarMonths(date, amount * 12);
+    public getHours(date: number): number {
+        return this.fromTimestamp(date).hour;
     }
 
-    clone(date: number): number {
+    public getMinutes(date: number): number {
+        return this.fromTimestamp(date).minute;
+    }
+
+    public getSeconds(date: number): number {
+        return this.fromTimestamp(date).second;
+    }
+
+    public getTime(date: number): number {
         return date;
+    }
+
+    public getNumDaysInMonth(date: number): number {
+        return this.fromTimestamp(date).daysInMonth ?? 0;
+    }
+
+    public differenceInCalendarDays(dateLeft: number, dateRight: number): number {
+        if (!this.isValid(dateLeft) || !this.isValid(dateRight)) {
+            return Number.NaN;
+        }
+
+        return Math.round(
+            this.fromTimestamp(dateLeft)
+                .startOf('day')
+                .diff(this.fromTimestamp(dateRight).startOf('day'), 'days').days,
+        );
+    }
+
+    public getYearName(date: number): string {
+        return this.fromTimestamp(date).toFormat('yyyy');
+    }
+
+    public getMonthNames(style: 'long' | 'short' | 'narrow'): string[] {
+        return Info.months(style, { locale: this.locale });
+    }
+
+    public getDayOfWeekNames(style: 'long' | 'short' | 'narrow'): string[] {
+        const weekdays = Info.weekdays(style, { locale: this.locale });
+
+        // Luxon returns Monday..Sunday.
+        // Existing picker expects Sunday..Saturday.
+        return [
+            weekdays[6],
+            ...weekdays.slice(0, 6),
+        ];
+    }
+
+    public getDateNames(): string[] {
+        return Array.from({ length: 31 }, (_, index) => `${index + 1}`);
+    }
+
+    public toIso8601(date: number): string {
+        return this.fromTimestamp(date).toISO() ?? '';
+    }
+
+    public isEqual(dateLeft: number, dateRight: number): boolean {
+        if (!this.isValid(dateLeft) || !this.isValid(dateRight)) {
+            return false;
+        }
+
+        return dateLeft === dateRight;
+    }
+
+    public isSameDay(dateLeft: number, dateRight: number): boolean {
+        if (!this.isValid(dateLeft) || !this.isValid(dateRight)) {
+            return false;
+        }
+
+        return this.fromTimestamp(dateLeft).hasSame(
+            this.fromTimestamp(dateRight),
+            'day',
+        );
+    }
+
+    public isValid(date: number): boolean {
+        return typeof date === 'number' && !Number.isNaN(date);
+    }
+
+    public invalid(): number {
+        return NaN;
+    }
+
+    public isDateInstance(obj: unknown): boolean {
+        return typeof obj === 'number';
+    }
+
+    public addCalendarYears(date: number, amount: number): number {
+        return this.fromTimestamp(date)
+            .plus({ years: Number(amount) })
+            .toMillis();
+    }
+
+    public addCalendarMonths(date: number, amount: number): number {
+        return this.fromTimestamp(date)
+            .plus({ months: Number(amount) })
+            .toMillis();
+    }
+
+    public addCalendarDays(date: number, amount: number): number {
+        return this.fromTimestamp(date)
+            .plus({ days: Number(amount) })
+            .toMillis();
+    }
+
+    public setHours(date: number, amount: number): number {
+        return this.fromTimestamp(date)
+            .set({ hour: amount })
+            .toMillis();
+    }
+
+    public setMinutes(date: number, amount: number): number {
+        return this.fromTimestamp(date)
+            .set({ minute: amount })
+            .toMillis();
+    }
+
+    public setSeconds(date: number, amount: number): number {
+        return this.fromTimestamp(date)
+            .set({ second: amount })
+            .toMillis();
     }
 
     public createDate(
         year: number,
         month: number,
         date: number,
-        hours: number = 0,
-        minutes: number = 0,
-        seconds: number = 0
+        hours = 0,
+        minutes = 0,
+        seconds = 0,
     ): number {
-        return createDate(year, month, date, hours, minutes, seconds).getTime();
-    }
+        const result = DateTime.local(
+            year,
+            month + 1,
+            date,
+            hours,
+            minutes,
+            seconds,
+            0,
+        ).setLocale(this.locale);
 
-    differenceInCalendarDays(dateLeft: number, dateRight: number): number {
-        if (this.isValid(dateLeft) && this.isValid(dateRight)) {
-            const dateLeftStartOfDay = this.createDate(
-                this.getYear(dateLeft),
-                this.getMonth(dateLeft),
-                this.getDate(dateLeft)
-            );
-            const dateRightStartOfDay = this.createDate(
-                this.getYear(dateRight),
-                this.getMonth(dateRight),
-                this.getDate(dateRight)
-            );
-
-            const timeStampLeft =
-                this.getTime(dateLeftStartOfDay) -
-                new Date(dateLeftStartOfDay).getTimezoneOffset() *
-                this.milliseondsInMinute;
-            const timeStampRight =
-                this.getTime(dateRightStartOfDay) -
-                new Date(dateRightStartOfDay).getTimezoneOffset() *
-                this.milliseondsInMinute;
-            return Math.round(
-                (timeStampLeft - timeStampRight) / this.millisecondsInDay
-            );
-        } else {
-            return null;
-        }
-    }
-
-    format(date: number, displayFormat: any): string {
-        if (!this.isValid(date)) {
-            throw Error('JSNativeDate: Cannot format invalid date.');
-        }
-
-        const jsDate = new Date(date);
-
-        if (SUPPORTS_INTL_API) {
-            if (this._clampDate &&
-                (jsDate.getFullYear() < 1 || jsDate.getFullYear() > 9999)) {
-                jsDate.setFullYear(
-                    Math.max(1, Math.min(9999, jsDate.getFullYear()))
-                );
-            }
-
-            displayFormat = {...displayFormat, timeZone: 'utc'};
-            const dtf = new Intl.DateTimeFormat(this.locale, displayFormat);
-            return UnixTimestampDateTimeAdapter.stripDirectionalityCharacters(UnixTimestampDateTimeAdapter._format(dtf, jsDate));
-        }
-
-        return UnixTimestampDateTimeAdapter.stripDirectionalityCharacters(jsDate.toDateString());
-    }
-
-    getDate(date: number): number {
-        return new Date(date).getDate();
-    }
-
-    getDateNames(): string[] {
-        if (SUPPORTS_INTL_API) {
-            const dtf = new Intl.DateTimeFormat(this.locale, {
-                day: 'numeric',
-                timeZone: 'utc'
-            });
-            return range(31, i =>
-                UnixTimestampDateTimeAdapter.stripDirectionalityCharacters(
-                    UnixTimestampDateTimeAdapter._format(dtf, new Date(2017, 0, i + 1))
-                )
-            );
-        }
-        return DEFAULT_DATE_NAMES;
-    }
-
-    getDay(date: number): number {
-        return new Date(date).getDay();
-    }
-
-    getDayOfWeekNames(style: 'long' | 'short' | 'narrow'): string[] {
-        if (SUPPORTS_INTL_API) {
-            const dtf = new Intl.DateTimeFormat(this.locale, {
-                weekday: style,
-                timeZone: 'utc'
-            });
-            return range(7, i =>
-                UnixTimestampDateTimeAdapter.stripDirectionalityCharacters(
-                    UnixTimestampDateTimeAdapter._format(dtf, new Date(2017, 0, i + 1))
-                )
+        if (!result.isValid) {
+            throw Error(
+                `UnixTimestampDateTimeAdapter: Invalid date "${date}" for month with index "${month}".`,
             );
         }
 
-        return DEFAULT_DAY_OF_WEEK_NAMES[style];
+        return result.toMillis();
     }
 
-    getHours(date: number): number {
-        return new Date(date).getHours();
-    }
-
-    getMinutes(date: number): number {
-        return new Date(date).getMinutes();
-    }
-
-    getMonth(date: number): number {
-        return new Date(date).getMonth();
-    }
-
-    getMonthNames(style: 'long' | 'short' | 'narrow'): string[] {
-        if (SUPPORTS_INTL_API) {
-            const dtf = new Intl.DateTimeFormat(this.locale, {
-                month: style,
-                timeZone: 'utc'
-            });
-            return range(12, i =>
-                UnixTimestampDateTimeAdapter.stripDirectionalityCharacters(
-                    UnixTimestampDateTimeAdapter._format(dtf, new Date(2017, i, 1))
-                )
-            );
-        }
-        return DEFAULT_MONTH_NAMES[style];
-    }
-
-    getNumDaysInMonth(date: number): number {
-        return getNumDaysInMonth(new Date(date));
-    }
-
-    getSeconds(date: number): number {
-        return new Date(date).getSeconds();
-    }
-
-    getTime(date: number): number {
+    public clone(date: number): number {
         return date;
     }
 
-    getYear(date: number): number {
-        return new Date(date).getFullYear();
+    public now(): number {
+        return DateTime.local()
+            .setLocale(this.locale)
+            .toMillis();
     }
 
-    getYearName(date: number): string {
-        if (SUPPORTS_INTL_API) {
-            const dtf = new Intl.DateTimeFormat(this.locale, {
-                year: 'numeric',
-                timeZone: 'utc'
-            });
-            return UnixTimestampDateTimeAdapter.stripDirectionalityCharacters(UnixTimestampDateTimeAdapter._format(dtf, new Date(date)));
+    /**
+     * Hybrid formatter:
+     * - string => Luxon format, e.g. 'dd.MM.yyyy HH:mm'
+     * - Intl.DateTimeFormatOptions => old adapter-compatible formatting
+     */
+    public format(
+        date: number,
+        displayFormat: string | Intl.DateTimeFormatOptions,
+    ): string {
+        if (!this.isValid(date)) {
+            throw Error('UnixTimestampDateTimeAdapter: Cannot format invalid date.');
         }
-        return String(this.getYear(date));
-    }
 
-    invalid(): number {
-        return NaN;
-    }
+        const dt = this.fromTimestamp(date);
 
-    isDateInstance(obj: any): boolean {
-        return typeof obj === 'number';
-    }
-
-    isEqual(dateLeft: number, dateRight: number): boolean {
-        if (this.isValid(dateLeft) && this.isValid(dateRight)) {
-            return dateLeft === dateRight;
-        } else {
-            return false;
+        if (typeof displayFormat === 'string') {
+            return dt.toFormat(displayFormat);
         }
+
+        return this.stripDirectionalityCharacters(
+            dt.toJSDate().toLocaleDateString(this.locale, displayFormat),
+        );
     }
 
-    isSameDay(dateLeft: number, dateRight: number): boolean {
-        if (this.isValid(dateLeft) && this.isValid(dateRight)) {
-            const dateLeftStartOfDay = new Date(dateLeft);
-            const dateRightStartOfDay = new Date(dateRight);
-            dateLeftStartOfDay.setHours(0, 0, 0, 0);
-            dateRightStartOfDay.setHours(0, 0, 0, 0);
-            return (dateLeftStartOfDay.getTime() === dateRightStartOfDay.getTime());
-        } else {
-            return false;
+    public parse(value: unknown, parseFormat: string | string[] | null): number | null {
+        if (value == null || value === '') {
+            return null;
         }
-    }
 
-    isValid(date: number): boolean {
-        return (date || date === 0) && !isNaN(date);
-    }
-
-    now(): number {
-        return new Date().getTime();
-    }
-
-    parse(value: any, parseFormat: any): number | null {
-        // There is no way using the native JS Date to set the parse format or locale
         if (typeof value === 'number') {
-            return value;
+            return this.isValid(value) ? value : this.invalid();
         }
-        return value ? new Date(Date.parse(value)).getTime() : null;
+
+        if (value instanceof Date) {
+            const date = DateTime.fromJSDate(value).setLocale(this.locale);
+
+            return date.isValid ? date.toMillis() : this.invalid();
+        }
+
+        if (DateTime.isDateTime(value)) {
+            return value.isValid
+                ? value.setLocale(this.locale).toMillis()
+                : this.invalid();
+        }
+
+        if (typeof value !== 'string') {
+            return this.invalid();
+        }
+
+        if (parseFormat) {
+            const formats = Array.isArray(parseFormat) ? parseFormat : [parseFormat];
+
+            for (const format of formats) {
+                if (typeof format !== 'string') {
+                    continue;
+                }
+
+                const parsed = DateTime.fromFormat(value, format, {
+                    locale: this.locale,
+                });
+
+                if (parsed.isValid) {
+                    return parsed.toMillis();
+                }
+            }
+        }
+
+        const iso = DateTime.fromISO(value, {
+            locale: this.locale,
+        });
+
+        if (iso.isValid) {
+            return iso.toMillis();
+        }
+
+        const jsDate = DateTime.fromJSDate(new Date(value)).setLocale(this.locale);
+
+        return jsDate.isValid ? jsDate.toMillis() : this.invalid();
     }
 
-    setHours(date: number, amount: number): number {
-        const result = new Date(date);
-        result.setHours(amount);
-        return result.getTime();
+    public override deserialize(value: unknown): number | null {
+        if (value == null || value === '') {
+            return null;
+        }
+
+        if (typeof value === 'number') {
+            return this.isValid(value) ? value : this.invalid();
+        }
+
+        if (value instanceof Date) {
+            const date = DateTime.fromJSDate(value).setLocale(this.locale);
+
+            return date.isValid ? date.toMillis() : this.invalid();
+        }
+
+        if (DateTime.isDateTime(value)) {
+            return value.isValid
+                ? value.setLocale(this.locale).toMillis()
+                : this.invalid();
+        }
+
+        if (typeof value === 'string') {
+            const date = DateTime.fromISO(value, {
+                locale: this.locale,
+            });
+
+            return date.isValid ? date.toMillis() : this.invalid();
+        }
+
+        return this.invalid();
     }
 
-    setMinutes(date: number, amount: number): number {
-        const result = new Date(date);
-        result.setMinutes(amount);
-        return result.getTime();
+    public override setLocale(locale: string): void {
+        super.setLocale(locale || 'ru');
     }
 
-    setSeconds(date: number, amount: number): number {
-        const result = new Date(date);
-        result.setSeconds(amount);
-        return result.getTime();
+    private fromTimestamp(timestamp: number): DateTime {
+        return DateTime.fromMillis(timestamp).setLocale(this.locale);
     }
 
-    toIso8601(date: number): string {
-        return new Date(date).toISOString();
+    private stripDirectionalityCharacters(value: string): string {
+        return value.replace(/[\u200e\u200f]/g, '');
     }
 }

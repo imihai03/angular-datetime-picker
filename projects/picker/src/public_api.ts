@@ -6,7 +6,7 @@ export { OwlDateTimeModule } from './lib/date-time/date-time.module';
 
 export { OwlDateTimeIntl } from './lib/date-time/date-time-picker-intl.service';
 
-export { OwlNativeDateTimeModule } from './lib/date-time/adapter/native-date-time.module';
+export { OwlLuxonDateTimeModule } from './lib/date-time/adapter/luxon-date-time.module';
 
 export {
   OWL_DATE_TIME_LOCALE_PROVIDER,
@@ -37,6 +37,12 @@ export * from './lib/date-time/date-time-picker-input.directive';
 
 export * from './lib/date-time/calendar-multi-year-view.component';
 
+export * from './lib/date-time/adapter/luxon-date-time-adapter.class';
+
+export * from './lib/date-time/adapter/luxon-date-time-format.class';
+
+export * from './lib/date-time/adapter/luxon-date-time.module';
+
 export * from './lib/date-time/calendar-year-view.component';
 
 export * from './lib/date-time/calendar-month-view.component';
@@ -44,8 +50,6 @@ export * from './lib/date-time/calendar-month-view.component';
 export * from './lib/date-time/calendar.component';
 
 export * from './lib/date-time/timer.component';
-
-export { NativeDateTimeAdapter } from './lib/date-time/adapter/native-date-time-adapter.class';
 
 export * from './lib/date-time/options-provider';
 
