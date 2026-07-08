@@ -1,13 +1,8 @@
 {
-    "name": "@cislink/angular-datetime-picker",
-    "version": "21.0.0",
+    "name": "@imihai/angular-datetime-picker",
+    "version": "21.0.1",
     "description": "Angular Date Time Picker",
     "license": "MIT",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/danielmoncada/date-time-picker.git"
-    },
-    "homepage": "https://github.com/danielmoncada/date-time-picker",
     "publishConfig": {
         "access": "public"
     },
