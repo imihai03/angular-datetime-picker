@@ -158,7 +158,7 @@
       "prefix": "owl",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "builder": "@angular/build:ng-packagr",
           "options": {
             "tsConfig": "projects/picker/tsconfig.lib.json",
             "project": "projects/picker/ng-package.json"

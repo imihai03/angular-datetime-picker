@@ -1,15 +1,15 @@
 {
     "name": "@imihai/angular-datetime-picker",
-    "version": "21.0.2",
+    "version": "22.0.0",
     "description": "Angular Date Time Picker",
     "license": "MIT",
     "publishConfig": {
         "access": "public"
     },
     "peerDependencies": {
-        "@angular/common": "^21.0.0",
-        "@angular/core": "^21.0.0",
-        "@angular/cdk": "^21.0.0",
+        "@angular/common": "^22.0.6",
+        "@angular/core": "^22.0.6",
+        "@angular/cdk": "^22.0.4",
         "luxon": "^3.7.2"
     },
     "dependencies": {

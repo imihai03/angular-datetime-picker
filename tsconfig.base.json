@@ -8,6 +8,8 @@
     "declaration": false,
     "experimentalDecorators": true,
     "moduleResolution": "bundler",
+    "ignoreDeprecations": "6.0",
+    "strictNullChecks": false,
     "strictPropertyInitialization": false,
     "importHelpers": true,
     "target": "ES2022",
