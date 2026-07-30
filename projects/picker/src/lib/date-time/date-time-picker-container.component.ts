@@ -98,18 +98,18 @@ export class OwlDateTimeContainerComponent<T>
     }
 
     /**
-     * The current picker moment. This determines which time period is shown and which date is
+     * The current picker value. This determines which time period is shown and which date is
      * highlighted when using keyboard navigation.
      */
-    private _clamPickerMoment: T;
+    private _clampedPickerDateTime: T;
 
-    get pickerMoment() {
-        return this._clamPickerMoment;
+    get pickerDateTime() {
+        return this._clampedPickerDateTime;
     }
 
-    set pickerMoment(value: T) {
+    set pickerDateTime(value: T) {
         if (value) {
-            this._clamPickerMoment = this.dateTimeAdapter.clampDate(
+            this._clampedPickerDateTime = this.dateTimeAdapter.clampDate(
                 value,
                 this.picker.minDateTime,
                 this.picker.maxDateTime,
@@ -265,7 +265,7 @@ export class OwlDateTimeContainerComponent<T>
         if (this.picker.isInSingleMode) {
             result = this.dateSelectedInSingleMode(date);
             if (result) {
-                this.pickerMoment = result;
+                this.pickerDateTime = result;
                 this.picker.select(result);
             } else {
                 // we close the picker when result is null and pickerType is calendar.
@@ -279,21 +279,21 @@ export class OwlDateTimeContainerComponent<T>
         if (this.picker.isInRangeMode) {
             result = this.dateSelectedInRangeMode(date);
             if (result) {
-                this.pickerMoment = result[this.activeSelectedIndex];
+                this.pickerDateTime = result[this.activeSelectedIndex];
                 this.picker.select(result);
             }
         }
     }
 
     public timeSelected(time: T): void {
-        this.pickerMoment = this.dateTimeAdapter.clone(time);
+        this.pickerDateTime = this.dateTimeAdapter.clone(time);
 
-        if (!this.picker.dateTimeChecker(this.pickerMoment)) {
+        if (!this.picker.dateTimeChecker(this.pickerDateTime)) {
             return;
         }
 
         if (this.picker.isInSingleMode) {
-            this.picker.select(this.pickerMoment);
+            this.picker.select(this.pickerDateTime);
             return;
         }
 
@@ -306,20 +306,20 @@ export class OwlDateTimeContainerComponent<T>
                 (this.activeSelectedIndex === 0 &&
                     selecteds[1] &&
                     this.dateTimeAdapter.compare(
-                        this.pickerMoment,
+                        this.pickerDateTime,
                         selecteds[1],
                     ) === 1) ||
                 (this.activeSelectedIndex === 1 &&
                     selecteds[0] &&
                     this.dateTimeAdapter.compare(
-                        this.pickerMoment,
+                        this.pickerDateTime,
                         selecteds[0],
                     ) === -1)
             ) {
-                selecteds[0] = this.pickerMoment;
-                selecteds[1] = this.pickerMoment;
+                selecteds[0] = this.pickerDateTime;
+                selecteds[1] = this.pickerDateTime;
             } else {
-                selecteds[this.activeSelectedIndex] = this.pickerMoment;
+                selecteds[this.activeSelectedIndex] = this.pickerDateTime;
             }
 
             if (selecteds[0]) {
@@ -345,7 +345,7 @@ export class OwlDateTimeContainerComponent<T>
      * Handle click on set button
      */
     public onSetClicked(event: any): void {
-        if (!this.picker.dateTimeChecker(this.pickerMoment)) {
+        if (!this.picker.dateTimeChecker(this.pickerDateTime)) {
             this.hidePicker$.next(null);
             event.preventDefault();
             return;
@@ -450,14 +450,14 @@ export class OwlDateTimeContainerComponent<T>
 
             const selected = this.picker.selecteds[this.activeSelectedIndex];
             if (this.picker.selecteds && selected) {
-                this.pickerMoment = this.dateTimeAdapter.clone(selected);
+                this.pickerDateTime = this.dateTimeAdapter.clone(selected);
             }
         }
         return;
     }
 
     private initPicker(): void {
-        this.pickerMoment = this.picker.startAt || this.dateTimeAdapter.now();
+        this.pickerDateTime = this.picker.startAt || this.dateTimeAdapter.now();
         this.activeSelectedIndex = this.picker.selectMode === 'rangeTo' ? 1 : 0;
     }
 
@@ -579,9 +579,9 @@ export class OwlDateTimeContainerComponent<T>
                 this.dateTimeAdapter.getYear(date),
                 this.dateTimeAdapter.getMonth(date),
                 this.dateTimeAdapter.getDate(date),
-                this.dateTimeAdapter.getHours(this.pickerMoment),
-                this.dateTimeAdapter.getMinutes(this.pickerMoment),
-                this.dateTimeAdapter.getSeconds(this.pickerMoment),
+                this.dateTimeAdapter.getHours(this.pickerDateTime),
+                this.dateTimeAdapter.getMinutes(this.pickerDateTime),
+                this.dateTimeAdapter.getSeconds(this.pickerDateTime),
             );
             result = this.dateTimeAdapter.clampDate(
                 result,

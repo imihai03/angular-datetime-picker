@@ -2,6 +2,7 @@
  * calendar.component.spec
  */
 
+import { DateTime } from 'luxon';
 import {
     ComponentFixture,
     inject,
@@ -9,12 +10,13 @@ import {
 } from '@angular/core/testing';
 import { Component, NgZone } from '@angular/core';
 import {
+    createTestDateTime,
     MockNgZone,
     dispatchFakeEvent,
     dispatchMouseEvent,
     dispatchKeyboardEvent
 } from '../../test-helpers';
-import { OwlNativeDateTimeModule } from './adapter/native-date-time.module';
+import { OwlLuxonDateTimeModule } from './adapter/luxon-date-time.module';
 import { OwlDateTimeModule } from './date-time.module';
 import { OwlCalendarComponent } from './calendar.component';
 import { OwlDateTimeIntl } from './date-time-picker-intl.service';
@@ -43,7 +45,7 @@ describe('OwlCalendarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, OwlDateTimeModule],
+            imports: [OwlLuxonDateTimeModule, OwlDateTimeModule],
             declarations: [
                 StandardCalendarComponent,
                 CalendarWithCalendarWeeks,
@@ -62,7 +64,7 @@ describe('OwlCalendarComponent', () => {
         let testComponent: StandardCalendarComponent;
         let calendarElement: HTMLElement;
         let periodButton: HTMLElement;
-        let calendarInstance: OwlCalendarComponent<Date>;
+        let calendarInstance: OwlCalendarComponent<DateTime>;
 
         beforeEach(() => {
             fixture = TestBed.createComponent(StandardCalendarComponent);
@@ -82,8 +84,8 @@ describe('OwlCalendarComponent', () => {
 
         it('should be in month view with specified month active', () => {
             expect(calendarInstance.currentView).toBe(DateView.MONTH);
-            expect(calendarInstance.pickerMoment).toEqual(
-                new Date(2018, JAN, 31)
+            expect(calendarInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31)
             );
         });
 
@@ -95,7 +97,7 @@ describe('OwlCalendarComponent', () => {
 
             fixture.detectChanges();
             expect(calendarInstance.currentView).toBe(DateView.MONTH);
-            expect(testComponent.selected).toEqual(new Date(2018, JAN, 31));
+            expect(testComponent.selected).toEqual(createTestDateTime(2018, JAN, 31));
         });
 
         it('should emit the selected month on cell clicked in year view', () => {
@@ -103,8 +105,8 @@ describe('OwlCalendarComponent', () => {
             fixture.detectChanges();
 
             expect(calendarInstance.currentView).toBe(DateView.MULTI_YEARS);
-            expect(calendarInstance.pickerMoment).toEqual(
-                new Date(2018, JAN, 31)
+            expect(calendarInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31)
             );
 
             (calendarElement.querySelector(
@@ -119,9 +121,9 @@ describe('OwlCalendarComponent', () => {
                 '.owl-dt-calendar-cell-active'
             ) as HTMLElement).click();
 
-            const normalizedMonth: Date =
+            const normalizedMonth: DateTime =
                 fixture.componentInstance.selectedMonth;
-            expect(normalizedMonth.getMonth()).toEqual(0);
+            expect(normalizedMonth.month - 1).toEqual(0);
         });
 
         it('should emit the selected year on cell clicked in multi-years view', () => {
@@ -129,8 +131,8 @@ describe('OwlCalendarComponent', () => {
             fixture.detectChanges();
 
             expect(calendarInstance.currentView).toBe(DateView.MULTI_YEARS);
-            expect(calendarInstance.pickerMoment).toEqual(
-                new Date(2018, JAN, 31)
+            expect(calendarInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31)
             );
             (calendarElement.querySelector(
                 '.owl-dt-calendar-cell-active'
@@ -138,8 +140,8 @@ describe('OwlCalendarComponent', () => {
 
             fixture.detectChanges();
 
-            const normalizedYear: Date = fixture.componentInstance.selectedYear;
-            expect(normalizedYear.getFullYear()).toEqual(2018);
+            const normalizedYear: DateTime = fixture.componentInstance.selectedYear;
+            expect(normalizedYear.year).toEqual(2018);
         });
 
         it('should re-render when the i18n labels have changed', () => {
@@ -179,9 +181,9 @@ describe('OwlCalendarComponent', () => {
                     fixture.detectChanges();
                 });
 
-                it('should initially set pickerMoment', () => {
-                    expect(calendarInstance.pickerMoment).toEqual(
-                        new Date(2018, JAN, 31)
+                it('should initially set pickerDateTime', () => {
+                    expect(calendarInstance.pickerDateTime).toEqual(
+                        createTestDateTime(2018, JAN, 31)
                     );
                 });
 
@@ -249,8 +251,8 @@ describe('OwlCalendarComponent', () => {
                         fixture.detectChanges();
 
                         expect(calendarInstance.currentView).toBe(DateView.MONTH);
-                        expect(calendarInstance.pickerMoment).toEqual(
-                            new Date(2018, FEB, 28)
+                        expect(calendarInstance.pickerDateTime).toEqual(
+                            createTestDateTime(2018, FEB, 28)
                         );
                         expect(testComponent.selected).toBeUndefined();
                     });
@@ -282,8 +284,8 @@ describe('OwlCalendarComponent', () => {
                         fixture.detectChanges();
 
                         expect(calendarInstance.currentView).toBe(DateView.YEAR);
-                        expect(calendarInstance.pickerMoment).toEqual(
-                            new Date(2019, JAN, 31)
+                        expect(calendarInstance.pickerDateTime).toEqual(
+                            createTestDateTime(2019, JAN, 31)
                         );
                         expect(testComponent.selected).toBeUndefined();
                     });
@@ -296,7 +298,7 @@ describe('OwlCalendarComponent', () => {
         let fixture: ComponentFixture<CalendarWithCalendarWeeks>;
         let testComponent: CalendarWithCalendarWeeks;
         let calendarElement: HTMLElement;
-        let calendarInstance: OwlCalendarComponent<Date>;
+        let calendarInstance: OwlCalendarComponent<DateTime>;
 
         beforeEach(() => {
             fixture = TestBed.createComponent(CalendarWithCalendarWeeks);
@@ -351,7 +353,7 @@ describe('OwlCalendarComponent', () => {
         let fixture: ComponentFixture<CalendarWithMinMaxComponent>;
         let testComponent: CalendarWithMinMaxComponent;
         let calendarElement: HTMLElement;
-        let calendarInstance: OwlCalendarComponent<Date>;
+        let calendarInstance: OwlCalendarComponent<DateTime>;
 
         beforeEach(() => {
             fixture = TestBed.createComponent(CalendarWithMinMaxComponent);
@@ -374,7 +376,7 @@ describe('OwlCalendarComponent', () => {
             expect(monthViewComp).toBeTruthy();
 
             spyOn(monthViewComp, 'generateCalendar').and.callThrough();
-            testComponent.minDate = new Date(2017, NOV, 1);
+            testComponent.minDate = createTestDateTime(2017, NOV, 1);
             fixture.detectChanges();
 
             expect(monthViewComp.generateCalendar).toHaveBeenCalled();
@@ -388,7 +390,7 @@ describe('OwlCalendarComponent', () => {
             expect(monthViewComp).toBeTruthy();
 
             spyOn(monthViewComp, 'generateCalendar').and.callThrough();
-            testComponent.maxDate = new Date(2017, NOV, 1);
+            testComponent.maxDate = createTestDateTime(2017, NOV, 1);
             fixture.detectChanges();
 
             expect(monthViewComp.generateCalendar).toHaveBeenCalled();
@@ -414,7 +416,7 @@ describe('OwlCalendarComponent', () => {
             expect(yearViewComp).toBeTruthy();
 
             spyOn(yearViewComp, 'generateMonthList').and.callThrough();
-            testComponent.minDate = new Date(2017, NOV, 1);
+            testComponent.minDate = createTestDateTime(2017, NOV, 1);
             fixture.detectChanges();
 
             expect(yearViewComp.generateMonthList).toHaveBeenCalled();
@@ -440,7 +442,7 @@ describe('OwlCalendarComponent', () => {
             expect(yearViewComp).toBeTruthy();
 
             spyOn(yearViewComp, 'generateMonthList').and.callThrough();
-            testComponent.maxDate = new Date(2017, NOV, 1);
+            testComponent.maxDate = createTestDateTime(2017, NOV, 1);
             fixture.detectChanges();
 
             expect(yearViewComp.generateMonthList).toHaveBeenCalled();
@@ -461,7 +463,7 @@ describe('OwlCalendarComponent', () => {
             expect(multiYearsViewComp).toBeTruthy();
 
             spyOn(multiYearsViewComp, 'generateYearList').and.callThrough();
-            testComponent.minDate = new Date(2017, NOV, 1);
+            testComponent.minDate = createTestDateTime(2017, NOV, 1);
             fixture.detectChanges();
 
             expect(multiYearsViewComp.generateYearList).toHaveBeenCalled();
@@ -482,7 +484,7 @@ describe('OwlCalendarComponent', () => {
             expect(multiYearsViewComp).toBeTruthy();
 
             spyOn(multiYearsViewComp, 'generateYearList').and.callThrough();
-            testComponent.maxDate = new Date(2017, NOV, 1);
+            testComponent.maxDate = createTestDateTime(2017, NOV, 1);
             fixture.detectChanges();
 
             expect(multiYearsViewComp.generateYearList).toHaveBeenCalled();
@@ -493,7 +495,7 @@ describe('OwlCalendarComponent', () => {
         let fixture: ComponentFixture<CalendarWithDateFilterComponent>;
         let testComponent: CalendarWithDateFilterComponent;
         let calendarElement: HTMLElement;
-        let calendarInstance: OwlCalendarComponent<Date>;
+        let calendarInstance: OwlCalendarComponent<DateTime>;
 
         beforeEach(() => {
             fixture = TestBed.createComponent(CalendarWithDateFilterComponent);
@@ -516,7 +518,7 @@ describe('OwlCalendarComponent', () => {
             (monthCell as HTMLElement).click();
             fixture.detectChanges();
 
-            expect(testComponent.selected).toEqual(new Date(2018, JAN, 2));
+            expect(testComponent.selected).toEqual(createTestDateTime(2018, JAN, 2));
         });
     });
 });
@@ -527,49 +529,49 @@ describe('OwlCalendarComponent', () => {
         <owl-date-time-calendar
                 [(selected)]="selected"
                 [selectMode]="selectMode"
-                [pickerMoment]="pickerMoment"
+                [pickerDateTime]="pickerDateTime"
                 (monthSelected)="selectedMonth=$event"
                 (yearSelected)="selectedYear=$event"></owl-date-time-calendar>
     `
 })
 class StandardCalendarComponent {
     selectMode = 'single';
-    selected: Date;
-    selectedYear: Date;
-    selectedMonth: Date;
-    pickerMoment = new Date(2018, JAN, 31);
+    selected: DateTime;
+    selectedYear: DateTime;
+    selectedMonth: DateTime;
+    pickerDateTime = createTestDateTime(2018, JAN, 31);
 }
 
 @Component({
     standalone: false,
     template: `
         <owl-date-time-calendar [selectMode]="selectMode"
-                                [pickerMoment]="pickerMoment"
+                                [pickerDateTime]="pickerDateTime"
                                 [minDate]="minDate"
                                 [maxDate]="maxDate"></owl-date-time-calendar>
     `
 })
 class CalendarWithMinMaxComponent {
     selectMode = 'single';
-    startAt: Date;
-    minDate = new Date(2016, JAN, 1);
-    maxDate = new Date(2019, JAN, 1);
-    pickerMoment = new Date(2018, JAN, 31);
+    startAt: DateTime;
+    minDate = createTestDateTime(2016, JAN, 1);
+    maxDate = createTestDateTime(2019, JAN, 1);
+    pickerDateTime = createTestDateTime(2018, JAN, 31);
 }
 
 @Component({
     standalone: false,
     template: `
         <owl-date-time-calendar [selectMode]="selectMode"
-                                [pickerMoment]="pickerMoment"
+                                [pickerDateTime]="pickerDateTime"
                                 [showCalendarWeeks]="showCalendarWeeks"></owl-date-time-calendar>
     `
 })
 class CalendarWithCalendarWeeks {
     selectMode = 'single';
-    startAt: Date;
+    startAt: DateTime;
     showCalendarWeeks = false;
-    pickerMoment = new Date(2018, JAN, 31);
+    pickerDateTime = createTestDateTime(2018, JAN, 31);
 }
 
 @Component({
@@ -577,16 +579,16 @@ class CalendarWithCalendarWeeks {
     template: `
         <owl-date-time-calendar [(selected)]="selected"
                                 [selectMode]="selectMode"
-                                [pickerMoment]="pickerMoment"
+                                [pickerDateTime]="pickerDateTime"
                                 [dateFilter]="dateFilter"></owl-date-time-calendar>
     `
 })
 class CalendarWithDateFilterComponent {
     selectMode = 'single';
-    selected: Date;
-    pickerMoment = new Date(2018, JAN, 31);
+    selected: DateTime;
+    pickerDateTime = createTestDateTime(2018, JAN, 31);
 
-    dateFilter(date: Date) {
-        return !(date.getDate() % 2) && date.getMonth() !== NOV;
+    dateFilter(date: DateTime) {
+        return !(date.day % 2) && date.month - 1 !== NOV;
     }
 }

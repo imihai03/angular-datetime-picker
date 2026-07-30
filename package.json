@@ -1,6 +1,6 @@
 {
     "name": "@imihai/angular-datetime-picker",
-    "version": "22.0.0",
+    "version": "22.0.6",
     "description": "Angular Date Time Picker",
     "license": "MIT",
     "scripts": {

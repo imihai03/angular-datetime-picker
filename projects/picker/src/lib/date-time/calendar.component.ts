@@ -79,13 +79,13 @@ export class OwlCalendarComponent<T>
     }
 
     @Input()
-    get pickerMoment() {
-        return this._pickerMoment;
+    get pickerDateTime() {
+        return this._pickerDateTime;
     }
 
-    set pickerMoment(value: T) {
+    set pickerDateTime(value: T) {
         value = this.dateTimeAdapter.deserialize(value);
-        this._pickerMoment =
+        this._pickerDateTime =
             this.getValidDate(value) || this.dateTimeAdapter.now();
     }
 
@@ -114,10 +114,10 @@ export class OwlCalendarComponent<T>
     get periodButtonText(): string {
         return this.isMonthView
             ? this.dateTimeAdapter.format(
-                this.pickerMoment,
+                this.pickerDateTime,
                 this.dateTimeFormats.monthYearLabel
             )
-            : this.dateTimeAdapter.getYearName(this.pickerMoment);
+            : this.dateTimeAdapter.getYearName(this.pickerDateTime);
     }
 
     get periodButtonLabel(): string {
@@ -215,13 +215,13 @@ export class OwlCalendarComponent<T>
     /** The maximum selectable date. */
     private _maxDate: T | null;
 
-    /** The current picker moment */
-    private _pickerMoment: T;
+    /** The date and time currently displayed by the picker. */
+    private _pickerDateTime: T;
 
     @Input()
     selectMode: SelectMode;
 
-    /** The currently selected moment. */
+    /** The currently selected date and time. */
     private _selected: T | null;
 
     private _selecteds: T[] = [];
@@ -256,9 +256,9 @@ export class OwlCalendarComponent<T>
     @Input()
     hideOtherMonths: boolean;
 
-    /** Emits when the currently picker moment changes. */
+    /** Emits when the displayed date and time changes. */
     @Output()
-    pickerMomentChange = new EventEmitter<T>();
+    pickerDateTimeChange = new EventEmitter<T>();
 
     /** Emits when the selected date changes. */
     @Output()
@@ -350,22 +350,22 @@ export class OwlCalendarComponent<T>
      * Handles user clicks on the previous button.
      * */
     public previousClicked(): void {
-        this.pickerMoment = this.isMonthView
-            ? this.dateTimeAdapter.addCalendarMonths(this.pickerMoment, -1)
-            : this.dateTimeAdapter.addCalendarYears(this.pickerMoment, -1);
+        this.pickerDateTime = this.isMonthView
+            ? this.dateTimeAdapter.addCalendarMonths(this.pickerDateTime, -1)
+            : this.dateTimeAdapter.addCalendarYears(this.pickerDateTime, -1);
 
-        this.pickerMomentChange.emit(this.pickerMoment);
+        this.pickerDateTimeChange.emit(this.pickerDateTime);
     }
 
     /**
      * Handles user clicks on the next button.
      * */
     public nextClicked(): void {
-        this.pickerMoment = this.isMonthView
-            ? this.dateTimeAdapter.addCalendarMonths(this.pickerMoment, 1)
-            : this.dateTimeAdapter.addCalendarYears(this.pickerMoment, 1);
+        this.pickerDateTime = this.isMonthView
+            ? this.dateTimeAdapter.addCalendarMonths(this.pickerDateTime, 1)
+            : this.dateTimeAdapter.addCalendarYears(this.pickerDateTime, 1);
 
-        this.pickerMomentChange.emit(this.pickerMoment);
+        this.pickerDateTimeChange.emit(this.pickerDateTime);
     }
 
     public dateSelected(date: T): void {
@@ -383,13 +383,13 @@ export class OwlCalendarComponent<T>
     }
 
     /**
-     * Change the pickerMoment value and switch to a specific view
+     * Change the displayed date and switch to a specific view.
      */
     public goToDateInView(
         date: T,
         view: DateViewType
     ): void {
-        this.handlePickerMomentChange(date);
+        this.handlePickerDateTimeChange(date);
         if ((!this.yearOnly && !this.multiyearOnly) ||
             (this.multiyearOnly && (view !== DateView.MONTH && view !== DateView.YEAR)) ||
             (this.yearOnly && view !== DateView.MONTH)) {
@@ -401,15 +401,15 @@ export class OwlCalendarComponent<T>
     }
 
     /**
-     * Change the pickerMoment value
+     * Change the displayed date.
      */
-    public handlePickerMomentChange(date: T): void {
-        this.pickerMoment = this.dateTimeAdapter.clampDate(
+    public handlePickerDateTimeChange(date: T): void {
+        this.pickerDateTime = this.dateTimeAdapter.clampDate(
             date,
             this.minDate,
             this.maxDate
         );
-        this.pickerMomentChange.emit(this.pickerMoment);
+        this.pickerDateTimeChange.emit(this.pickerDateTime);
         return;
     }
 
@@ -422,7 +422,7 @@ export class OwlCalendarComponent<T>
      */
     public prevButtonEnabled(): boolean {
         return (
-            !this.minDate || !this.isSameView(this.pickerMoment, this.minDate)
+            !this.minDate || !this.isSameView(this.pickerDateTime, this.minDate)
         );
     }
 
@@ -431,7 +431,7 @@ export class OwlCalendarComponent<T>
      */
     public nextButtonEnabled(): boolean {
         return (
-            !this.maxDate || !this.isSameView(this.pickerMoment, this.maxDate)
+            !this.maxDate || !this.isSameView(this.pickerDateTime, this.maxDate)
         );
     }
 

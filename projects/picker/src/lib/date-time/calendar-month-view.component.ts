@@ -143,26 +143,26 @@ export class OwlMonthViewComponent<T>
         this.setSelectedDates();
     }
 
-    private _pickerMoment: T;
+    private _pickerDateTime: T;
     @Input()
-    get pickerMoment() {
-        return this._pickerMoment;
+    get pickerDateTime() {
+        return this._pickerDateTime;
     }
 
-    set pickerMoment(value: T) {
-        const oldMoment = this._pickerMoment;
+    set pickerDateTime(value: T) {
+        const oldDateTime = this._pickerDateTime;
         value = this.dateTimeAdapter.deserialize(value);
-        this._pickerMoment =
+        this._pickerDateTime =
             this.getValidDate(value) || this.dateTimeAdapter.now();
 
         this.firstDateOfMonth = this.dateTimeAdapter.createDate(
-            this.dateTimeAdapter.getYear(this._pickerMoment),
-            this.dateTimeAdapter.getMonth(this._pickerMoment),
+            this.dateTimeAdapter.getYear(this._pickerDateTime),
+            this.dateTimeAdapter.getMonth(this._pickerDateTime),
             1
         );
 
         if (
-            !this.isSameMonth(oldMoment, this._pickerMoment) &&
+            !this.isSameMonth(oldDateTime, this._pickerDateTime) &&
             this.initiated
         ) {
             this.generateCalendar();
@@ -230,9 +230,9 @@ export class OwlMonthViewComponent<T>
     }
 
     get activeCell(): number {
-        if (this.pickerMoment) {
+        if (this.pickerDateTime) {
             return (
-                this.dateTimeAdapter.getDate(this.pickerMoment) +
+                this.dateTimeAdapter.getDate(this.pickerDateTime) +
                 this.firstRowOffset -
                 1
             );
@@ -292,7 +292,7 @@ export class OwlMonthViewComponent<T>
 
     /** Emits when any date is activated. */
     @Output()
-    readonly pickerMomentChange: EventEmitter<T> = new EventEmitter<T>();
+    readonly pickerDateTimeChange: EventEmitter<T> = new EventEmitter<T>();
 
     /** The body of calendar table */
     @ViewChild(OwlCalendarBodyComponent, { static: true })
@@ -365,96 +365,96 @@ export class OwlMonthViewComponent<T>
      * Handle keydown event on calendar body
      */
     public handleCalendarKeydown(event: KeyboardEvent): void {
-        let moment;
+        let dateTime;
         switch (event.keyCode) {
             // minus 1 day
             case LEFT_ARROW:
-                moment = this.dateTimeAdapter.addCalendarDays(
-                    this.pickerMoment,
+                dateTime = this.dateTimeAdapter.addCalendarDays(
+                    this.pickerDateTime,
                     -1
                 );
-                this.pickerMomentChange.emit(moment);
+                this.pickerDateTimeChange.emit(dateTime);
                 break;
 
             // add 1 day
             case RIGHT_ARROW:
-                moment = this.dateTimeAdapter.addCalendarDays(
-                    this.pickerMoment,
+                dateTime = this.dateTimeAdapter.addCalendarDays(
+                    this.pickerDateTime,
                     1
                 );
-                this.pickerMomentChange.emit(moment);
+                this.pickerDateTimeChange.emit(dateTime);
                 break;
 
             // minus 1 week
             case UP_ARROW:
-                moment = this.dateTimeAdapter.addCalendarDays(
-                    this.pickerMoment,
+                dateTime = this.dateTimeAdapter.addCalendarDays(
+                    this.pickerDateTime,
                     -7
                 );
-                this.pickerMomentChange.emit(moment);
+                this.pickerDateTimeChange.emit(dateTime);
                 break;
 
             // add 1 week
             case DOWN_ARROW:
-                moment = this.dateTimeAdapter.addCalendarDays(
-                    this.pickerMoment,
+                dateTime = this.dateTimeAdapter.addCalendarDays(
+                    this.pickerDateTime,
                     7
                 );
-                this.pickerMomentChange.emit(moment);
+                this.pickerDateTimeChange.emit(dateTime);
                 break;
 
             // move to first day of current month
             case HOME:
-                moment = this.dateTimeAdapter.addCalendarDays(
-                    this.pickerMoment,
-                    1 - this.dateTimeAdapter.getDate(this.pickerMoment)
+                dateTime = this.dateTimeAdapter.addCalendarDays(
+                    this.pickerDateTime,
+                    1 - this.dateTimeAdapter.getDate(this.pickerDateTime)
                 );
-                this.pickerMomentChange.emit(moment);
+                this.pickerDateTimeChange.emit(dateTime);
                 break;
 
             // move to last day of current month
             case END:
-                moment = this.dateTimeAdapter.addCalendarDays(
-                    this.pickerMoment,
-                    this.dateTimeAdapter.getNumDaysInMonth(this.pickerMoment) -
-                        this.dateTimeAdapter.getDate(this.pickerMoment)
+                dateTime = this.dateTimeAdapter.addCalendarDays(
+                    this.pickerDateTime,
+                    this.dateTimeAdapter.getNumDaysInMonth(this.pickerDateTime) -
+                        this.dateTimeAdapter.getDate(this.pickerDateTime)
                 );
-                this.pickerMomentChange.emit(moment);
+                this.pickerDateTimeChange.emit(dateTime);
                 break;
 
             // minus 1 month (or 1 year)
             case PAGE_UP:
-                moment = event.altKey
+                dateTime = event.altKey
                     ? this.dateTimeAdapter.addCalendarYears(
-                          this.pickerMoment,
+                          this.pickerDateTime,
                           -1
                       )
                     : this.dateTimeAdapter.addCalendarMonths(
-                          this.pickerMoment,
+                          this.pickerDateTime,
                           -1
                       );
-                this.pickerMomentChange.emit(moment);
+                this.pickerDateTimeChange.emit(dateTime);
                 break;
 
             // add 1 month (or 1 year)
             case PAGE_DOWN:
-                moment = event.altKey
+                dateTime = event.altKey
                     ? this.dateTimeAdapter.addCalendarYears(
-                          this.pickerMoment,
+                          this.pickerDateTime,
                           1
                       )
                     : this.dateTimeAdapter.addCalendarMonths(
-                          this.pickerMoment,
+                          this.pickerDateTime,
                           1
                       );
-                this.pickerMomentChange.emit(moment);
+                this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // select the pickerMoment
+            // Select the active date.
             case ENTER:
-                if (!this.dateFilter || this.dateFilter(this.pickerMoment)) {
+                if (!this.dateFilter || this.dateFilter(this.pickerDateTime)) {
                     this.selectDate(
-                        this.dateTimeAdapter.getDate(this.pickerMoment)
+                        this.dateTimeAdapter.getDate(this.pickerDateTime)
                     );
                 }
                 break;
@@ -492,7 +492,7 @@ export class OwlMonthViewComponent<T>
      * Generate the calendar days array
      * */
     private generateCalendar(): void {
-        if (!this.pickerMoment) {
+        if (!this.pickerDateTime) {
             return;
         }
 
@@ -579,7 +579,7 @@ export class OwlMonthViewComponent<T>
     private createDateCell(date: T, daysDiff: number): CalendarCell {
         // total days of the month
         const daysInMonth = this.dateTimeAdapter.getNumDaysInMonth(
-            this.pickerMoment
+            this.pickerDateTime
         );
         const dateNum = this.dateTimeAdapter.getDate(date);
         // const dateName = this.dateNames[dateNum - 1];

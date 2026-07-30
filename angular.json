@@ -25,9 +25,6 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "allowedCommonJsDependencies": [
-              "moment-timezone"
-            ],
             "aot": true,
             "outputPath": {
               "base": "dist/date-time-picker-app"

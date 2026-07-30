@@ -1,17 +1,22 @@
 /**
  * calendar-month-view.component.spec
  */
+
+import { DateTime } from 'luxon';
 import { registerLocaleData } from '@angular/common';
 import localeDutch from '@angular/common/locales/nl';
 import { DateTimeAdapter } from './adapter/date-time-adapter.class';
 import { OwlMonthViewComponent } from './calendar-month-view.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OwlDateTimeIntl } from './date-time-picker-intl.service';
-import { OwlNativeDateTimeModule } from './adapter/native-date-time.module';
+import { OwlLuxonDateTimeModule } from './adapter/luxon-date-time.module';
 import { OwlDateTimeModule } from './date-time.module';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { dispatchKeyboardEvent } from '../../test-helpers';
+import {
+    createTestDateTime,
+    dispatchKeyboardEvent
+} from '../../test-helpers';
 import {
     DOWN_ARROW,
     END,
@@ -40,7 +45,7 @@ const JAN = 0,
 describe('OwlMonthViewComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, OwlDateTimeModule],
+            imports: [OwlLuxonDateTimeModule, OwlDateTimeModule],
             declarations: [
                 StandardMonthViewComponent,
                 MonthViewWithDateFilterComponent
@@ -54,7 +59,7 @@ describe('OwlMonthViewComponent', () => {
         let testComponent: StandardMonthViewComponent;
         let monthViewDebugElement: DebugElement;
         let monthViewElement: HTMLElement;
-        let monthViewInstance: OwlMonthViewComponent<Date>;
+        let monthViewInstance: OwlMonthViewComponent<DateTime>;
 
         beforeEach(() => {
             fixture = TestBed.createComponent(StandardMonthViewComponent);
@@ -83,7 +88,7 @@ describe('OwlMonthViewComponent', () => {
         });
 
         it('should NOT show selected date if in different month', () => {
-            testComponent.selected = new Date(2018, MAR, 10);
+            testComponent.selected = createTestDateTime(2018, MAR, 10);
             fixture.detectChanges();
             const selectedEl = monthViewElement.querySelector(
                 '.owl-dt-calendar-cell-selected'
@@ -130,15 +135,15 @@ describe('OwlMonthViewComponent', () => {
             );
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', LEFT_ARROW);
             fixture.detectChanges();
-            expect(testComponent.pickerMoment).toEqual(new Date(2018, JAN, 4));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 4));
 
-            monthViewInstance.pickerMoment = new Date(2017, JAN, 1);
+            monthViewInstance.pickerDateTime = createTestDateTime(2017, JAN, 1);
             fixture.detectChanges();
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', LEFT_ARROW);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2016, DEC, 31));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2016, DEC, 31));
         });
 
         it('should increment date on right arrow press', () => {
@@ -148,12 +153,12 @@ describe('OwlMonthViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', RIGHT_ARROW);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2018, JAN, 6));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 6));
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', RIGHT_ARROW);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2018, JAN, 7));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 7));
         });
 
         it('should go up a row on up arrow press', () => {
@@ -163,15 +168,15 @@ describe('OwlMonthViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', UP_ARROW);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2017, DEC, 29));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2017, DEC, 29));
 
-            monthViewInstance.pickerMoment = new Date(2017, JAN, 7);
+            monthViewInstance.pickerDateTime = createTestDateTime(2017, JAN, 7);
             fixture.detectChanges();
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', UP_ARROW);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2016, DEC, 31));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2016, DEC, 31));
         });
 
         it('should go down a row on down arrow press', () => {
@@ -181,16 +186,16 @@ describe('OwlMonthViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', DOWN_ARROW);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2018, JAN, 12));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 12));
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', DOWN_ARROW);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2018, JAN, 19));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 19));
         });
 
         it('should go to beginning of the month on home press', () => {
-            monthViewInstance.pickerMoment = new Date(2018, JAN, 7);
+            monthViewInstance.pickerDateTime = createTestDateTime(2018, JAN, 7);
             fixture.detectChanges();
 
             const calendarBodyEl = monthViewElement.querySelector(
@@ -199,16 +204,16 @@ describe('OwlMonthViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', HOME);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2018, JAN, 1));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 1));
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', HOME);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2018, JAN, 1));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 1));
         });
 
         it('should go to end of the month on end press', () => {
-            monthViewInstance.pickerMoment = new Date(2018, JAN, 7);
+            monthViewInstance.pickerDateTime = createTestDateTime(2018, JAN, 7);
             fixture.detectChanges();
 
             const calendarBodyEl = monthViewElement.querySelector(
@@ -217,12 +222,12 @@ describe('OwlMonthViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', END);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2018, JAN, 31));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 31));
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', END);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2018, JAN, 31));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 31));
         });
 
         it('should go back one month on page up press', () => {
@@ -232,12 +237,12 @@ describe('OwlMonthViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_UP);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2017, DEC, 5));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2017, DEC, 5));
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_UP);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2017, NOV, 5));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2017, NOV, 5));
         });
 
         it('should go forward one month on page down press', () => {
@@ -247,12 +252,12 @@ describe('OwlMonthViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_DOWN);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2018, FEB, 5));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, FEB, 5));
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_DOWN);
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2018, MAR, 5));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, MAR, 5));
         });
 
         it('should select active date on enter', () => {
@@ -262,12 +267,12 @@ describe('OwlMonthViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', LEFT_ARROW);
             fixture.detectChanges();
 
-            expect(testComponent.selected).toEqual(new Date(2018, JAN, 10));
+            expect(testComponent.selected).toEqual(createTestDateTime(2018, JAN, 10));
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', ENTER);
             fixture.detectChanges();
 
-            expect(testComponent.selected).toEqual(new Date(2018, JAN, 4));
+            expect(testComponent.selected).toEqual(createTestDateTime(2018, JAN, 4));
         });
     });
 
@@ -307,7 +312,7 @@ describe('OwlMonthViewComponent', () => {
         let adapter: DateTimeAdapter<unknown>;
         let monthViewDebugElement: DebugElement;
         let monthViewElement: HTMLElement;
-        let monthViewInstance: OwlMonthViewComponent<Date>;
+        let monthViewInstance: OwlMonthViewComponent<DateTime>;
 
         beforeAll(() => {
             registerLocaleData(localeDutch);
@@ -369,26 +374,26 @@ describe('OwlMonthViewComponent', () => {
     template: `
         <owl-date-time-month-view
                 [(selected)]="selected"
-                [(pickerMoment)]="pickerMoment"></owl-date-time-month-view>
+                [(pickerDateTime)]="pickerDateTime"></owl-date-time-month-view>
     `
 })
 class StandardMonthViewComponent {
-    selected = new Date(2018, JAN, 10);
-    pickerMoment = new Date(2018, JAN, 5);
+    selected = createTestDateTime(2018, JAN, 10);
+    pickerDateTime = createTestDateTime(2018, JAN, 5);
 }
 
 @Component({
     standalone: false,
     template: `
         <owl-date-time-month-view
-                [(pickerMoment)]="pickerMoment"
+                [(pickerDateTime)]="pickerDateTime"
                 [dateFilter]="dateFilter"></owl-date-time-month-view>
     `
 })
 class MonthViewWithDateFilterComponent {
-    pickerMoment = new Date(2018, JAN, 1);
-    dateFilter(date: Date) {
+    pickerDateTime = createTestDateTime(2018, JAN, 1);
+    dateFilter(date: DateTime) {
       // tslint:disable-next-line:triple-equals
-        return date.getDate() % 2 === 0;
+        return date.day % 2 === 0;
     }
 }

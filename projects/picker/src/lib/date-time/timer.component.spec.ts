@@ -2,6 +2,7 @@
  * timer.component.spec
  */
 
+import { DateTime } from 'luxon';
 import { EventEmitter } from '@angular/core';
 import {
     ComponentFixture,
@@ -12,11 +13,14 @@ import {
 import { OwlDateTimeIntl } from './date-time-picker-intl.service';
 import { Component, DebugElement, NgZone } from '@angular/core';
 import { discardPeriodicTasks } from '@angular/core/testing';
-import { OwlNativeDateTimeModule } from './adapter/native-date-time.module';
+import { OwlLuxonDateTimeModule } from './adapter/luxon-date-time.module';
 import { OwlDateTimeModule } from './date-time.module';
 import { By } from '@angular/platform-browser';
 import { OwlTimerComponent } from './timer.component';
-import { dispatchFakeEvent } from '../../test-helpers';
+import {
+    createTestDateTime,
+    dispatchFakeEvent
+} from '../../test-helpers';
 
 const JAN = 0,
     FEB = 1,
@@ -52,7 +56,7 @@ describe('OwlTimerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, OwlDateTimeModule],
+            imports: [OwlLuxonDateTimeModule, OwlDateTimeModule],
             declarations: [StandardTimerComponent],
             providers: [
                 OwlDateTimeIntl,
@@ -66,7 +70,7 @@ describe('OwlTimerComponent', () => {
         let testComponent: StandardTimerComponent;
         let timerDebugElement: DebugElement;
         let timerElement: HTMLElement;
-        let timerInstance: OwlTimerComponent<Date>;
+        let timerInstance: OwlTimerComponent<DateTime>;
 
         beforeEach(() => {
             fixture = TestBed.createComponent(StandardTimerComponent);
@@ -168,15 +172,15 @@ describe('OwlTimerComponent', () => {
             arrowBtns[0].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 13, 30, 30)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 13, 30, 30)
             );
 
             arrowBtns[1].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 12, 30, 30)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 12, 30, 30)
             );
 
             testComponent.stepHour = 2;
@@ -186,15 +190,15 @@ describe('OwlTimerComponent', () => {
             arrowBtns[0].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 14, 30, 30)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 14, 30, 30)
             );
 
             arrowBtns[1].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 12, 30, 30)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 12, 30, 30)
             );
         }));
 
@@ -209,15 +213,15 @@ describe('OwlTimerComponent', () => {
             arrowBtns[2].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 12, 31, 30)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 12, 31, 30)
             );
 
             arrowBtns[3].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 12, 30, 30)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 12, 30, 30)
             );
 
             testComponent.stepMinute = 2;
@@ -227,15 +231,15 @@ describe('OwlTimerComponent', () => {
             arrowBtns[2].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 12, 32, 30)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 12, 32, 30)
             );
 
             arrowBtns[3].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 12, 30, 30)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 12, 30, 30)
             );
         }));
 
@@ -252,15 +256,15 @@ describe('OwlTimerComponent', () => {
             arrowBtns[4].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 12, 30, 31)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 12, 30, 31)
             );
 
             arrowBtns[5].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 12, 30, 30)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 12, 30, 30)
             );
 
             testComponent.stepSecond = 2;
@@ -270,15 +274,15 @@ describe('OwlTimerComponent', () => {
             arrowBtns[4].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 12, 30, 32)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 12, 30, 32)
             );
 
             arrowBtns[5].click();
             fixture.detectChanges();
             flush();
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 12, 30, 30)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 12, 30, 30)
             );
         }));
 
@@ -296,12 +300,12 @@ describe('OwlTimerComponent', () => {
             flush();
 
             expect(toggleBtn.innerHTML).toContain('AM');
-            expect(testComponent.pickerMoment).toEqual(
-                new Date(2018, JAN, 31, 0, 30, 30)
+            expect(testComponent.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 31, 0, 30, 30)
             );
         }));
 
-        it('should disable all down arrow button if pickerMoment equals to minDateTime', () => {
+        it('should disable all down arrow button if pickerDateTime equals to minDateTime', () => {
             testComponent.showSecondsTimer = true;
             fixture.detectChanges();
             const arrowBtns = timerElement.querySelectorAll<HTMLButtonElement>(
@@ -309,7 +313,7 @@ describe('OwlTimerComponent', () => {
             );
             expect(arrowBtns.length).toBe(6);
 
-            testComponent.pickerMoment = new Date(testComponent.minDateTime);
+            testComponent.pickerDateTime = createTestDateTime(testComponent.minDateTime);
             fixture.detectChanges();
 
             // up arrow buttons
@@ -323,7 +327,7 @@ describe('OwlTimerComponent', () => {
             expect(arrowBtns[5].hasAttribute('disabled')).toBe(true);
         });
 
-        it('should disable all up arrow button if pickerMoment equals to maxDateTime', () => {
+        it('should disable all up arrow button if pickerDateTime equals to maxDateTime', () => {
             testComponent.showSecondsTimer = true;
             fixture.detectChanges();
             const arrowBtns = timerElement.querySelectorAll<HTMLButtonElement>(
@@ -331,7 +335,7 @@ describe('OwlTimerComponent', () => {
             );
             expect(arrowBtns.length).toBe(6);
 
-            testComponent.pickerMoment = new Date(testComponent.maxDateTime);
+            testComponent.pickerDateTime = createTestDateTime(testComponent.maxDateTime);
             fixture.detectChanges();
 
             // up arrow buttons
@@ -374,7 +378,7 @@ describe('OwlTimerComponent', () => {
         <owl-date-time-timer
                 [hour12Timer]="hour12Timer"
                 [showSecondsTimer]="showSecondsTimer"
-                [pickerMoment]="pickerMoment"
+                [pickerDateTime]="pickerDateTime"
                 [stepHour]="stepHour"
                 [stepMinute]="stepMinute"
                 [stepSecond]="stepSecond"
@@ -389,11 +393,11 @@ class StandardTimerComponent {
     stepSecond = 1;
     hour12Timer = false;
     showSecondsTimer = false;
-    pickerMoment = new Date(2018, JAN, 31, 12, 30, 30);
-    minDateTime = new Date(2018, JAN, 29, 12, 30, 30);
-    maxDateTime = new Date(2018, FEB, 1, 12, 30, 30);
+    pickerDateTime = createTestDateTime(2018, JAN, 31, 12, 30, 30);
+    minDateTime = createTestDateTime(2018, JAN, 29, 12, 30, 30);
+    maxDateTime = createTestDateTime(2018, FEB, 1, 12, 30, 30);
 
-    handleSelectedChange(val: Date) {
-        this.pickerMoment = val;
+    handleSelectedChange(val: DateTime) {
+        this.pickerDateTime = val;
     }
 }

@@ -1,5 +1,58 @@
 // Based on @angular/cdk/testing
 import { EventEmitter, NgZone } from '@angular/core';
+import { DateTime } from 'luxon';
+
+export function createTestDateTime(value: DateTime): DateTime;
+export function createTestDateTime(value: string): DateTime;
+export function createTestDateTime(timestamp: number): DateTime;
+export function createTestDateTime(
+    year: number,
+    month: number,
+    day: number,
+    hour?: number,
+    minute?: number,
+    second?: number
+): DateTime;
+export function createTestDateTime(
+    valueOrYear: DateTime | string | number,
+    month?: number,
+    day = 1,
+    hour = 0,
+    minute = 0,
+    second = 0
+): DateTime {
+    if (DateTime.isDateTime(valueOrYear)) {
+        const dateTime = valueOrYear as DateTime;
+
+        return DateTime.fromMillis(dateTime.toMillis(), {
+            zone: dateTime.zone,
+            locale: 'en-US'
+        });
+    }
+
+    if (typeof valueOrYear === 'string') {
+        return DateTime.fromFormat(valueOrYear, 'M/d/yyyy, hh:mm a', {
+            locale: 'en-US'
+        });
+    }
+
+    const numericValue = valueOrYear as number;
+
+    if (month === undefined) {
+        return DateTime.fromMillis(numericValue, {
+            locale: 'en-US'
+        });
+    }
+
+    return DateTime.local(
+        numericValue,
+        month + 1,
+        day,
+        hour,
+        minute,
+        second
+    ).setLocale('en-US');
+}
 
 export function dispatchEvent(node: Node | Window, event: Event): Event {
     node.dispatchEvent(event);

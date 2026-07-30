@@ -32,16 +32,16 @@ import { take } from 'rxjs/operators';
     }
 })
 export class OwlTimerComponent<T> implements OnInit {
-    /** The current picker moment */
-    private _pickerMoment: T;
+    /** The date and time currently displayed by the picker. */
+    private _pickerDateTime: T;
     @Input()
-    get pickerMoment() {
-        return this._pickerMoment;
+    get pickerDateTime() {
+        return this._pickerDateTime;
     }
 
-    set pickerMoment(value: T) {
+    set pickerDateTime(value: T) {
         value = this.dateTimeAdapter.deserialize(value);
-        this._pickerMoment =
+        this._pickerDateTime =
             this.getValidDate(value) || this.dateTimeAdapter.now();
     }
 
@@ -69,7 +69,7 @@ export class OwlTimerComponent<T> implements OnInit {
         this._maxDateTime = this.getValidDate(value);
     }
 
-    private isPM = false; // a flag indicates the current timer moment is in PM or AM
+    private isPM = false; // Whether the current time is PM in 12-hour mode.
 
     /**
      * Whether to show the second's timer
@@ -102,7 +102,7 @@ export class OwlTimerComponent<T> implements OnInit {
     stepSecond = 1;
 
     get hourValue(): number {
-        return this.dateTimeAdapter.getHours(this.pickerMoment);
+        return this.dateTimeAdapter.getHours(this.pickerDateTime);
     }
 
     /**
@@ -133,11 +133,11 @@ export class OwlTimerComponent<T> implements OnInit {
     }
 
     get minuteValue(): number {
-        return this.dateTimeAdapter.getMinutes(this.pickerMoment);
+        return this.dateTimeAdapter.getMinutes(this.pickerDateTime);
     }
 
     get secondValue(): number {
-        return this.dateTimeAdapter.getSeconds(this.pickerMoment);
+        return this.dateTimeAdapter.getSeconds(this.pickerDateTime);
     }
 
     get upHourButtonLabel(): string {
@@ -220,19 +220,19 @@ export class OwlTimerComponent<T> implements OnInit {
     }
 
     public setHourValue(hours: number): void {
-        const m = this.dateTimeAdapter.setHours(this.pickerMoment, hours);
+        const m = this.dateTimeAdapter.setHours(this.pickerDateTime, hours);
         this.selectedChange.emit(m);
         this.cdRef.markForCheck();
     }
 
     public setMinuteValue(minutes: number): void {
-        const m = this.dateTimeAdapter.setMinutes(this.pickerMoment, minutes);
+        const m = this.dateTimeAdapter.setMinutes(this.pickerDateTime, minutes);
         this.selectedChange.emit(m);
         this.cdRef.markForCheck();
     }
 
     public setSecondValue(seconds: number): void {
-        const m = this.dateTimeAdapter.setSeconds(this.pickerMoment, seconds);
+        const m = this.dateTimeAdapter.setSeconds(this.pickerDateTime, seconds);
         this.selectedChange.emit(m);
         this.cdRef.markForCheck();
     }
@@ -316,44 +316,44 @@ export class OwlTimerComponent<T> implements OnInit {
     }
 
     /**
-     * PickerMoment's hour value +/- certain amount and compare it to the give date
+     * Adjust the displayed hour and compare it to the given date.
      * 1 is after the comparedDate
      * -1 is before the comparedDate
      * 0 is equal the comparedDate
      * */
     private compareHours(amount: number, comparedDate: T): number {
-        const hours = this.dateTimeAdapter.getHours(this.pickerMoment) + amount;
-        const result = this.dateTimeAdapter.setHours(this.pickerMoment, hours);
+        const hours = this.dateTimeAdapter.getHours(this.pickerDateTime) + amount;
+        const result = this.dateTimeAdapter.setHours(this.pickerDateTime, hours);
         return this.dateTimeAdapter.compare(result, comparedDate);
     }
 
     /**
-     * PickerMoment's minute value +/- certain amount and compare it to the give date
+     * Adjust the displayed minute and compare it to the given date.
      * 1 is after the comparedDate
      * -1 is before the comparedDate
      * 0 is equal the comparedDate
      * */
     private compareMinutes(amount: number, comparedDate: T): number {
         const minutes =
-            this.dateTimeAdapter.getMinutes(this.pickerMoment) + amount;
+            this.dateTimeAdapter.getMinutes(this.pickerDateTime) + amount;
         const result = this.dateTimeAdapter.setMinutes(
-            this.pickerMoment,
+            this.pickerDateTime,
             minutes
         );
         return this.dateTimeAdapter.compare(result, comparedDate);
     }
 
     /**
-     * PickerMoment's second value +/- certain amount and compare it to the give date
+     * Adjust the displayed second and compare it to the given date.
      * 1 is after the comparedDate
      * -1 is before the comparedDate
      * 0 is equal the comparedDate
      * */
     private compareSeconds(amount: number, comparedDate: T): number {
         const seconds =
-            this.dateTimeAdapter.getSeconds(this.pickerMoment) + amount;
+            this.dateTimeAdapter.getSeconds(this.pickerDateTime) + amount;
         const result = this.dateTimeAdapter.setSeconds(
-            this.pickerMoment,
+            this.pickerDateTime,
             seconds
         );
         return this.dateTimeAdapter.compare(result, comparedDate);

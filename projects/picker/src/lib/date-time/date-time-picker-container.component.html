@@ -6,7 +6,7 @@
         <owl-date-time-calendar
             class="owl-dt-container-row"
             [firstDayOfWeek]="picker.firstDayOfWeek"
-            [(pickerMoment)]="pickerMoment"
+            [(pickerDateTime)]="pickerDateTime"
             [selected]="picker.selected"
             [selecteds]="picker.selecteds"
             [selectMode]="picker.selectMode"
@@ -27,7 +27,7 @@
     @if (pickerType === 'both' || pickerType === 'timer') {
         <owl-date-time-timer
             class="owl-dt-container-row"
-            [pickerMoment]="pickerMoment"
+            [pickerDateTime]="pickerDateTime"
             [minDateTime]="picker.minDateTime"
             [maxDateTime]="picker.maxDateTime"
             [showSecondsTimer]="picker.showSecondsTimer"

@@ -2,16 +2,21 @@
  * calendar-multi-year-view.component.spec
  */
 
+import { DateTime } from 'luxon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OwlDateTimeIntl } from './date-time-picker-intl.service';
-import { OwlNativeDateTimeModule } from './adapter/native-date-time.module';
+import { OwlLuxonDateTimeModule } from './adapter/luxon-date-time.module';
 import { OwlDateTimeModule } from './date-time.module';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import {
     OwlMultiYearViewComponent,
 } from './calendar-multi-year-view.component';
-import { dispatchMouseEvent, dispatchKeyboardEvent } from '../../test-helpers';
+import {
+    createTestDateTime,
+    dispatchKeyboardEvent,
+    dispatchMouseEvent
+} from '../../test-helpers';
 import {
     DOWN_ARROW,
     END,
@@ -43,7 +48,7 @@ const YEARS_PER_ROW = 3;
 describe('OwlMultiYearViewComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, OwlDateTimeModule],
+            imports: [OwlLuxonDateTimeModule, OwlDateTimeModule],
             declarations: [
                 StandardMultiYearViewComponent,
                 MultiYearViewWithDateFilterComponent
@@ -64,7 +69,7 @@ describe('OwlMultiYearViewComponent', () => {
         let testComponent: StandardMultiYearViewComponent;
         let multiYearViewDebugElement: DebugElement;
         let multiYearViewElement: HTMLElement;
-        let multiYearViewInstance: OwlMultiYearViewComponent<Date>;
+        let multiYearViewInstance: OwlMultiYearViewComponent<DateTime>;
 
         beforeEach(() => {
             fixture = TestBed.createComponent(StandardMultiYearViewComponent);
@@ -93,7 +98,7 @@ describe('OwlMultiYearViewComponent', () => {
         });
 
         it('should NOT show selected year if in different range', () => {
-            testComponent.selected = new Date(2040, JAN, 10);
+            testComponent.selected = createTestDateTime(2040, JAN, 10);
             fixture.detectChanges();
 
             const selectedElContent = multiYearViewElement.querySelector(
@@ -130,15 +135,15 @@ describe('OwlMultiYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', LEFT_ARROW);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2017, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2017, JAN, 5)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', LEFT_ARROW);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2016, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2016, JAN, 5)
             );
         });
 
@@ -149,15 +154,15 @@ describe('OwlMultiYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', RIGHT_ARROW);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2019, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2019, JAN, 5)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', RIGHT_ARROW);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2020, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2020, JAN, 5)
             );
         });
 
@@ -168,15 +173,15 @@ describe('OwlMultiYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', UP_ARROW);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2018 - YEARS_PER_ROW, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018 - YEARS_PER_ROW, JAN, 5)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', UP_ARROW);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2018 - YEARS_PER_ROW * 2, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018 - YEARS_PER_ROW * 2, JAN, 5)
             );
         });
 
@@ -187,15 +192,15 @@ describe('OwlMultiYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', DOWN_ARROW);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2018 + YEARS_PER_ROW, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018 + YEARS_PER_ROW, JAN, 5)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', DOWN_ARROW);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2018 + YEARS_PER_ROW * 2, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018 + YEARS_PER_ROW * 2, JAN, 5)
             );
         });
 
@@ -206,15 +211,15 @@ describe('OwlMultiYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', HOME);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2016, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2016, JAN, 5)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', HOME);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2016, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2016, JAN, 5)
             );
         });
 
@@ -225,15 +230,15 @@ describe('OwlMultiYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', END);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2036, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2036, JAN, 5)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', END);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2036, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2036, JAN, 5)
             );
         });
 
@@ -244,15 +249,15 @@ describe('OwlMultiYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_UP);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2018 - YEARS_PER_ROW * YEAR_ROWS, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018 - YEARS_PER_ROW * YEAR_ROWS, JAN, 5)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_UP);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2018 - YEARS_PER_ROW * YEAR_ROWS * 2, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018 - YEARS_PER_ROW * YEAR_ROWS * 2, JAN, 5)
             );
         });
 
@@ -263,15 +268,15 @@ describe('OwlMultiYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_DOWN);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2018 + YEARS_PER_ROW * YEAR_ROWS, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018 + YEARS_PER_ROW * YEAR_ROWS, JAN, 5)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_DOWN);
             fixture.detectChanges();
 
-            expect(multiYearViewInstance.pickerMoment).toEqual(
-                new Date(2018 + YEARS_PER_ROW * YEAR_ROWS * 2, JAN, 5)
+            expect(multiYearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018 + YEARS_PER_ROW * YEAR_ROWS * 2, JAN, 5)
             );
         });
     });
@@ -314,16 +319,16 @@ describe('OwlMultiYearViewComponent', () => {
     template: `
         <owl-date-time-multi-year-view
                 [selected]="selected"
-                [(pickerMoment)]="pickerMoment"
+                [(pickerDateTime)]="pickerDateTime"
                 (change)="handleChange($event)"></owl-date-time-multi-year-view>
     `
 })
 class StandardMultiYearViewComponent {
-    selected = new Date(2020, JAN, 10);
-    pickerMoment = new Date(2018, JAN, 5);
+    selected = createTestDateTime(2020, JAN, 10);
+    pickerDateTime = createTestDateTime(2018, JAN, 5);
 
-    handleChange(date: Date): void {
-        this.pickerMoment = new Date(date);
+    handleChange(date: DateTime): void {
+        this.pickerDateTime = createTestDateTime(date);
     }
 }
 
@@ -331,13 +336,13 @@ class StandardMultiYearViewComponent {
     standalone: false,
     template: `
         <owl-date-time-multi-year-view
-                [(pickerMoment)]="pickerMoment"
+                [(pickerDateTime)]="pickerDateTime"
                 [dateFilter]="dateFilter"></owl-date-time-multi-year-view>
     `
 })
 class MultiYearViewWithDateFilterComponent {
-    pickerMoment = new Date(2018, JAN, 1);
-    dateFilter(date: Date) {
-        return date.getFullYear() !== 2018;
+    pickerDateTime = createTestDateTime(2018, JAN, 1);
+    dateFilter(date: DateTime) {
+        return date.year !== 2018;
     }
 }

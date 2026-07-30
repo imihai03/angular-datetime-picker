@@ -199,7 +199,7 @@ export abstract class DateTimeAdapter<T> {
     abstract clone(date: T): T;
 
     /**
-     * Get a new moment
+     * Get the current date and time.
      * */
     abstract now(): T;
 

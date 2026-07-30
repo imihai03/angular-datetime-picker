@@ -120,7 +120,7 @@
     @switch (currentView) {
         @case (DateView.MONTH) {
             <owl-date-time-month-view
-                [pickerMoment]="pickerMoment"
+                [pickerDateTime]="pickerDateTime"
                 [firstDayOfWeek]="firstDayOfWeek"
                 [selected]="selected"
                 [selecteds]="selecteds"
@@ -130,14 +130,14 @@
                 [maxDate]="maxDate"
                 [dateFilter]="dateFilter"
                 [hideOtherMonths]="hideOtherMonths"
-                (pickerMomentChange)="handlePickerMomentChange($event)"
+                (pickerDateTimeChange)="handlePickerDateTimeChange($event)"
                 (selectedChange)="dateSelected($event)"
                 (userSelection)="userSelected()"
             ></owl-date-time-month-view>
         }
         @case (DateView.YEAR) {
             <owl-date-time-year-view
-                [pickerMoment]="pickerMoment"
+                [pickerDateTime]="pickerDateTime"
                 [selected]="selected"
                 [selecteds]="selecteds"
                 [selectMode]="selectMode"
@@ -145,14 +145,14 @@
                 [maxDate]="maxDate"
                 [dateFilter]="dateFilter"
                 (keyboardEnter)="focusActiveCell()"
-                (pickerMomentChange)="handlePickerMomentChange($event)"
+                (pickerDateTimeChange)="handlePickerDateTimeChange($event)"
                 (monthSelected)="selectMonthInYearView($event)"
                 (change)="goToDateInView($event, DateView.MONTH)"
             ></owl-date-time-year-view>
         }
         @case (DateView.MULTI_YEARS) {
             <owl-date-time-multi-year-view
-                [pickerMoment]="pickerMoment"
+                [pickerDateTime]="pickerDateTime"
                 [selected]="selected"
                 [selecteds]="selecteds"
                 [selectMode]="selectMode"
@@ -160,7 +160,7 @@
                 [maxDate]="maxDate"
                 [dateFilter]="dateFilter"
                 (keyboardEnter)="focusActiveCell()"
-                (pickerMomentChange)="handlePickerMomentChange($event)"
+                (pickerDateTimeChange)="handlePickerDateTimeChange($event)"
                 (yearSelected)="selectYearInMultiYearView($event)"
                 (change)="goToDateInView($event, DateView.YEAR)"
             ></owl-date-time-multi-year-view>

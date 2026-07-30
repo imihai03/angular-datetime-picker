@@ -2,14 +2,19 @@
  * calendar-year-view.component.spec
  */
 
+import { DateTime } from 'luxon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OwlDateTimeIntl } from './date-time-picker-intl.service';
-import { OwlNativeDateTimeModule } from './adapter/native-date-time.module';
+import { OwlLuxonDateTimeModule } from './adapter/luxon-date-time.module';
 import { OwlDateTimeModule } from './date-time.module';
 import { Component, DebugElement } from '@angular/core';
 import { OwlYearViewComponent } from './calendar-year-view.component';
 import { By } from '@angular/platform-browser';
-import { dispatchMouseEvent, dispatchKeyboardEvent } from '../../test-helpers';
+import {
+    createTestDateTime,
+    dispatchKeyboardEvent,
+    dispatchMouseEvent
+} from '../../test-helpers';
 import {
     DOWN_ARROW,
     END,
@@ -37,7 +42,7 @@ const JAN = 0,
 describe('OwlYearViewComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, OwlDateTimeModule],
+            imports: [OwlLuxonDateTimeModule, OwlDateTimeModule],
             declarations: [
                 StandardYearViewComponent,
                 YearViewWithDateFilterComponent
@@ -51,7 +56,7 @@ describe('OwlYearViewComponent', () => {
         let testComponent: StandardYearViewComponent;
         let yearViewDebugElement: DebugElement;
         let yearViewElement: HTMLElement;
-        let yearViewInstance: OwlYearViewComponent<Date>;
+        let yearViewInstance: OwlYearViewComponent<DateTime>;
 
         beforeEach(() => {
             fixture = TestBed.createComponent(StandardYearViewComponent);
@@ -80,7 +85,7 @@ describe('OwlYearViewComponent', () => {
         });
 
         it('should NOT show selected month if in different year', () => {
-            testComponent.selected = new Date(2017, JAN, 10);
+            testComponent.selected = createTestDateTime(2017, JAN, 10);
             fixture.detectChanges();
 
             const selectedElContent = yearViewElement.querySelector(
@@ -113,7 +118,7 @@ describe('OwlYearViewComponent', () => {
         });
 
         it('should allow selection of month with less days than current active date', () => {
-            testComponent.pickerMoment = new Date(2017, JUL, 31);
+            testComponent.pickerDateTime = createTestDateTime(2017, JUL, 31);
             fixture.detectChanges();
 
             const cellJune = yearViewElement.querySelector(
@@ -122,7 +127,7 @@ describe('OwlYearViewComponent', () => {
             dispatchMouseEvent(cellJune, 'click');
             fixture.detectChanges();
 
-            expect(testComponent.pickerMoment).toEqual(new Date(2017, JUN, 30));
+            expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2017, JUN, 30));
         });
 
         it('should decrement month on left arrow press', () => {
@@ -132,15 +137,15 @@ describe('OwlYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', LEFT_ARROW);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2017, DEC, 5)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2017, DEC, 5)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', LEFT_ARROW);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2017, NOV, 5)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2017, NOV, 5)
             );
         });
 
@@ -151,15 +156,15 @@ describe('OwlYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', RIGHT_ARROW);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, FEB, 5)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, FEB, 5)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', RIGHT_ARROW);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, MAR, 5)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, MAR, 5)
             );
         });
 
@@ -170,28 +175,28 @@ describe('OwlYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', UP_ARROW);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2017, OCT, 5)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2017, OCT, 5)
             );
 
-            yearViewInstance.pickerMoment = new Date(2018, JUL, 1);
+            yearViewInstance.pickerDateTime = createTestDateTime(2018, JUL, 1);
             fixture.detectChanges();
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', UP_ARROW);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, APR, 1)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, APR, 1)
             );
 
-            yearViewInstance.pickerMoment = new Date(2018, DEC, 10);
+            yearViewInstance.pickerDateTime = createTestDateTime(2018, DEC, 10);
             fixture.detectChanges();
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', UP_ARROW);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, SEP, 10)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, SEP, 10)
             );
         });
 
@@ -202,33 +207,33 @@ describe('OwlYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', DOWN_ARROW);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, APR, 5)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, APR, 5)
             );
 
-            yearViewInstance.pickerMoment = new Date(2018, JUN, 1);
+            yearViewInstance.pickerDateTime = createTestDateTime(2018, JUN, 1);
             fixture.detectChanges();
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', DOWN_ARROW);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, SEP, 1)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, SEP, 1)
             );
 
-            yearViewInstance.pickerMoment = new Date(2018, SEP, 30);
+            yearViewInstance.pickerDateTime = createTestDateTime(2018, SEP, 30);
             fixture.detectChanges();
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', DOWN_ARROW);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, DEC, 30)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, DEC, 30)
             );
         });
 
         it('should go to first month of the year on home press', () => {
-            yearViewInstance.pickerMoment = new Date(2018, SEP, 30);
+            yearViewInstance.pickerDateTime = createTestDateTime(2018, SEP, 30);
             fixture.detectChanges();
 
             const calendarBodyEl = yearViewElement.querySelector(
@@ -237,20 +242,20 @@ describe('OwlYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', HOME);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, JAN, 30)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 30)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', HOME);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, JAN, 30)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, JAN, 30)
             );
         });
 
         it('should go to last month of the year on end press', () => {
-            yearViewInstance.pickerMoment = new Date(2018, OCT, 31);
+            yearViewInstance.pickerDateTime = createTestDateTime(2018, OCT, 31);
             fixture.detectChanges();
 
             const calendarBodyEl = yearViewElement.querySelector(
@@ -259,20 +264,20 @@ describe('OwlYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', END);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, DEC, 31)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, DEC, 31)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', END);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, DEC, 31)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, DEC, 31)
             );
         });
 
         it('should go back one year on page up press', () => {
-            yearViewInstance.pickerMoment = new Date(2016, FEB, 29);
+            yearViewInstance.pickerDateTime = createTestDateTime(2016, FEB, 29);
             fixture.detectChanges();
 
             const calendarBodyEl = yearViewElement.querySelector(
@@ -281,20 +286,20 @@ describe('OwlYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_UP);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2015, FEB, 28)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2015, FEB, 28)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_UP);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2014, FEB, 28)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2014, FEB, 28)
             );
         });
 
         it('should go forward one year on page down press', () => {
-            yearViewInstance.pickerMoment = new Date(2016, FEB, 29);
+            yearViewInstance.pickerDateTime = createTestDateTime(2016, FEB, 29);
             fixture.detectChanges();
 
             const calendarBodyEl = yearViewElement.querySelector(
@@ -303,15 +308,15 @@ describe('OwlYearViewComponent', () => {
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_DOWN);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2017, FEB, 28)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2017, FEB, 28)
             );
 
             dispatchKeyboardEvent(calendarBodyEl, 'keydown', PAGE_DOWN);
             fixture.detectChanges();
 
-            expect(yearViewInstance.pickerMoment).toEqual(
-                new Date(2018, FEB, 28)
+            expect(yearViewInstance.pickerDateTime).toEqual(
+                createTestDateTime(2018, FEB, 28)
             );
         });
     });
@@ -352,16 +357,16 @@ describe('OwlYearViewComponent', () => {
     template: `
         <owl-date-time-year-view
                 [selected]="selected"
-                [(pickerMoment)]="pickerMoment"
+                [(pickerDateTime)]="pickerDateTime"
                 (change)="handleChange($event)"></owl-date-time-year-view>
     `
 })
 class StandardYearViewComponent {
-    selected = new Date(2018, JAN, 10);
-    pickerMoment = new Date(2018, JAN, 5);
+    selected = createTestDateTime(2018, JAN, 10);
+    pickerDateTime = createTestDateTime(2018, JAN, 5);
 
-    handleChange(date: Date): void {
-        this.pickerMoment = new Date(date);
+    handleChange(date: DateTime): void {
+        this.pickerDateTime = createTestDateTime(date);
     }
 }
 
@@ -369,13 +374,13 @@ class StandardYearViewComponent {
     standalone: false,
     template: `
         <owl-date-time-year-view
-                [(pickerMoment)]="pickerMoment"
+                [(pickerDateTime)]="pickerDateTime"
                 [dateFilter]="dateFilter"></owl-date-time-year-view>
     `
 })
 class YearViewWithDateFilterComponent {
-    pickerMoment = new Date(2018, JAN, 1);
-    dateFilter(date: Date) {
-        return date.getMonth() !== FEB;
+    pickerDateTime = createTestDateTime(2018, JAN, 1);
+    dateFilter(date: DateTime) {
+        return date.month - 1 !== FEB;
     }
 }

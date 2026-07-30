@@ -230,17 +230,15 @@ export abstract class OwlDateTime<T> {
     ) {
         if (!this.dateTimeAdapter) {
             throw Error(
-                `OwlDateTimePicker: No provider found for DateTimeAdapter. You must import one of the following ` +
-                `modules at your application root: OwlNativeDateTimeModule, OwlMomentDateTimeModule, or provide a ` +
-                `custom implementation.`
+                `OwlDateTimePicker: No provider found for DateTimeAdapter. You must import ` +
+                `OwlLuxonDateTimeModule at your application root or provide a custom implementation.`
             );
         }
 
         if (!this.dateTimeFormats) {
             throw Error(
-                `OwlDateTimePicker: No provider found for OWL_DATE_TIME_FORMATS. You must import one of the following ` +
-                `modules at your application root: OwlNativeDateTimeModule, OwlMomentDateTimeModule, or provide a ` +
-                `custom implementation.`
+                `OwlDateTimePicker: No provider found for OWL_DATE_TIME_FORMATS. You must import ` +
+                `OwlLuxonDateTimeModule at your application root or provide custom formats.`
             );
         }
 

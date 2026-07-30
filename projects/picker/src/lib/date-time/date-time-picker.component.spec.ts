@@ -2,6 +2,7 @@
  * date-time-picker.component.spec
  */
 
+import { DateTime } from 'luxon';
 import { OwlDateTimeComponent } from './date-time-picker.component';
 import {
     ComponentFixture,
@@ -21,8 +22,9 @@ import { OwlDateTimeInputDirective } from './date-time-picker-input.directive';
 import { UntypedFormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OwlDateTimeModule } from './date-time.module';
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { OwlNativeDateTimeModule } from './adapter/native-date-time.module';
+import { OwlLuxonDateTimeModule } from './adapter/luxon-date-time.module';
 import {
+    createTestDateTime,
     dispatchKeyboardEvent,
     dispatchMouseEvent,
     createKeyboardEvent,
@@ -92,7 +94,7 @@ describe('OwlDateTimeComponent', () => {
         container.ngOnDestroy();
     }));
 
-    describe('with OwlNativeDateTimeModule', () => {
+    describe('with OwlLuxonDateTimeModule', () => {
         describe('standard DateTimePicker', () => {
             let fixture: ComponentFixture<StandardDateTimePickerComponent>;
             let testComponent: StandardDateTimePickerComponent;
@@ -100,7 +102,7 @@ describe('OwlDateTimeComponent', () => {
 
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(StandardDateTimePickerComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 fixture.detectChanges();
                 testComponent = fixture.componentInstance;
@@ -321,11 +323,11 @@ describe('OwlDateTimeComponent', () => {
                     'Expected dateTimePicker to be closed.'
                 );
                 expect(testComponent.dateTimePickerInput.value).toEqual(
-                    new Date(2020, JAN, 1)
+                    createTestDateTime(2020, JAN, 1)
                 ); // not update to clicked value
             }));
 
-            it('should update input value to pickerMoment value and close popup panel when set button clicked', fakeAsync(() => {
+            it('should update input value to pickerDateTime value and close popup panel when set button clicked', fakeAsync(() => {
                 testComponent.dateTimePicker.open();
                 fixture.detectChanges();
                 flush();
@@ -339,8 +341,8 @@ describe('OwlDateTimeComponent', () => {
                 );
                 containerElement = containerDebugElement.nativeElement;
                 expect(
-                    containerDebugElement.componentInstance.pickerMoment
-                ).toEqual(new Date(2020, JAN, 1));
+                    containerDebugElement.componentInstance.pickerDateTime
+                ).toEqual(createTestDateTime(2020, JAN, 1));
 
                 const btns = containerElement.querySelectorAll(
                     '.owl-dt-container-control-button'
@@ -354,7 +356,7 @@ describe('OwlDateTimeComponent', () => {
                     'Expected dateTimePicker to be closed.'
                 );
                 expect(testComponent.dateTimePickerInput.value).toEqual(
-                    new Date(2020, JAN, 1)
+                    createTestDateTime(2020, JAN, 1)
                 );
             }));
 
@@ -372,8 +374,8 @@ describe('OwlDateTimeComponent', () => {
                 );
                 containerElement = containerDebugElement.nativeElement;
                 expect(
-                    containerDebugElement.componentInstance.pickerMoment
-                ).toEqual(new Date(2020, JAN, 1));
+                    containerDebugElement.componentInstance.pickerDateTime
+                ).toEqual(createTestDateTime(2020, JAN, 1));
 
                 const monthCell = containerElement.querySelector(
                     '[aria-label="January 2, 2020"]'
@@ -393,13 +395,13 @@ describe('OwlDateTimeComponent', () => {
                     'Expected dateTimePicker to be closed.'
                 );
                 expect(testComponent.dateTimePickerInput.value).toEqual(
-                    new Date(2020, JAN, 2)
+                    createTestDateTime(2020, JAN, 2)
                 );
             }));
 
             it('should set startAt fallback to input value', () => {
                 expect(testComponent.dateTimePicker.startAt).toEqual(
-                    new Date(2020, JAN, 1)
+                    createTestDateTime(2020, JAN, 1)
                 );
             });
 
@@ -511,8 +513,8 @@ describe('OwlDateTimeComponent', () => {
                     );
                     containerElement = containerDebugElement.nativeElement;
                     expect(
-                        containerDebugElement.componentInstance.pickerMoment
-                    ).toEqual(new Date(2020, JAN, 1));
+                        containerDebugElement.componentInstance.pickerDateTime
+                    ).toEqual(createTestDateTime(2020, JAN, 1));
 
                     const dateCell = containerElement.querySelector(
                         '[aria-label="January 2, 2020"]'
@@ -526,7 +528,7 @@ describe('OwlDateTimeComponent', () => {
                         'Expected dateTimePicker to be closed.'
                     );
                     expect(testComponent.dateTimePickerInput.value).toEqual(
-                        new Date(2020, JAN, 2)
+                        createTestDateTime(2020, JAN, 2)
                     );
                 }));
 
@@ -545,8 +547,8 @@ describe('OwlDateTimeComponent', () => {
                         );
                         containerElement = containerDebugElement.nativeElement;
                         expect(
-                            containerDebugElement.componentInstance.pickerMoment
-                        ).toEqual(new Date(2020, JAN, 1));
+                            containerDebugElement.componentInstance.pickerDateTime
+                        ).toEqual(createTestDateTime(2020, JAN, 1));
 
                         const calendarBodyEl = containerElement.querySelector(
                             '.owl-dt-calendar-body'
@@ -568,7 +570,7 @@ describe('OwlDateTimeComponent', () => {
                             'Expected dateTimePicker to be closed.'
                         );
                         expect(testComponent.dateTimePickerInput.value).toEqual(
-                            new Date(2020, JAN, 2)
+                            createTestDateTime(2020, JAN, 2)
                         );
                     }));
 
@@ -586,10 +588,10 @@ describe('OwlDateTimeComponent', () => {
                     );
                     containerElement = containerDebugElement.nativeElement;
                     expect(
-                        containerDebugElement.componentInstance.pickerMoment
-                    ).toEqual(new Date(2020, JAN, 1));
+                        containerDebugElement.componentInstance.pickerDateTime
+                    ).toEqual(createTestDateTime(2020, JAN, 1));
                     expect(testComponent.dateTimePicker.selected).toEqual(
-                        new Date(2020, JAN, 1)
+                        createTestDateTime(2020, JAN, 1)
                     );
 
                     const dateCell = containerElement.querySelector(
@@ -604,7 +606,7 @@ describe('OwlDateTimeComponent', () => {
                         'Expected dateTimePicker to be closed.'
                     );
                     expect(testComponent.dateTimePickerInput.value).toEqual(
-                        new Date(2020, JAN, 1)
+                        createTestDateTime(2020, JAN, 1)
                     );
                 }));
             });
@@ -652,7 +654,7 @@ describe('OwlDateTimeComponent', () => {
 
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(RangeDateTimePickerComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 fixture.detectChanges();
                 testComponent = fixture.componentInstance;
@@ -711,7 +713,7 @@ describe('OwlDateTimeComponent', () => {
                 ).toBe(0);
                 expect(testComponent.dateTimePicker.selecteds.length).toBe(2);
                 expect(testComponent.dateTimePicker.selecteds[0]).toEqual(
-                    new Date(2020, JAN, 2)
+                    createTestDateTime(2020, JAN, 2)
                 );
                 expect(testComponent.dateTimePicker.selecteds[1]).toBe(null);
             }));
@@ -740,14 +742,14 @@ describe('OwlDateTimeComponent', () => {
                 ).toBe(0);
                 expect(testComponent.dateTimePicker.selecteds.length).toBe(2);
                 expect(testComponent.dateTimePicker.selecteds[0]).toEqual(
-                    new Date(2020, JAN, 2)
+                    createTestDateTime(2020, JAN, 2)
                 );
                 expect(testComponent.dateTimePicker.selecteds[1]).toBe(null);
             }));
 
             it('clicking the dateCell should set the rangeFrom value when dateCell value is before the old rangeFrom value',
                 fakeAsync(() => {
-                    testComponent.dates = [new Date(2020, JAN, 2), null];
+                    testComponent.dates = [createTestDateTime(2020, JAN, 2), null];
                     fixture.detectChanges();
 
                     testComponent.dateTimePicker.open();
@@ -773,13 +775,13 @@ describe('OwlDateTimeComponent', () => {
                     ).toBe(0);
                     expect(testComponent.dateTimePicker.selecteds.length).toBe(2);
                     expect(testComponent.dateTimePicker.selecteds[0]).toEqual(
-                        new Date(2020, JAN, 1)
+                        createTestDateTime(2020, JAN, 1)
                     );
                     expect(testComponent.dateTimePicker.selecteds[1]).toBe(null);
                 }));
 
             it('clicking the dateCell should set the rangeTo value when rangeFrom already had value', fakeAsync(() => {
-                testComponent.dates = [new Date(2020, JAN, 2), null];
+                testComponent.dates = [createTestDateTime(2020, JAN, 2), null];
                 fixture.detectChanges();
 
                 testComponent.dateTimePicker.open();
@@ -805,15 +807,15 @@ describe('OwlDateTimeComponent', () => {
                 ).toBe(1);
                 expect(testComponent.dateTimePicker.selecteds.length).toBe(2);
                 expect(testComponent.dateTimePicker.selecteds[0]).toEqual(
-                    new Date(2020, JAN, 2)
+                    createTestDateTime(2020, JAN, 2)
                 );
                 expect(testComponent.dateTimePicker.selecteds[1]).toEqual(
-                    new Date(2020, JAN, 3)
+                    createTestDateTime(2020, JAN, 3)
                 );
             }));
 
             it('if startAt value is set, the start time value should be shown in the rangeTo calendar start time', fakeAsync(() => {
-                testComponent.startAt = new Date('1/19/2020, 09:33 AM');
+                testComponent.startAt = createTestDateTime('1/19/2020, 09:33 AM');
                 testComponent.dateTimePicker.open();
                 fixture.detectChanges();
                 flush();
@@ -830,8 +832,8 @@ describe('OwlDateTimeComponent', () => {
 
 
             it('if endAt value is set, the end time value should be shown in the rangeTo calendar end time', fakeAsync(() => {
-                testComponent.dates = [new Date(2020, JAN, 2), null];
-                testComponent.endAt = new Date('1/19/2020, 10:55 PM');
+                testComponent.dates = [createTestDateTime(2020, JAN, 2), null];
+                testComponent.endAt = createTestDateTime('1/19/2020, 10:55 PM');
                 fixture.detectChanges();
 
                 testComponent.dateTimePicker.open();
@@ -856,7 +858,7 @@ describe('OwlDateTimeComponent', () => {
             }));
 
             it('auto select previous time if dates is selected', fakeAsync(() => {
-                testComponent.dates = [new Date('1/19/2020, 09:33 AM'), new Date('1/22/2020, 10:44 PM')];
+                testComponent.dates = [createTestDateTime('1/19/2020, 09:33 AM'), createTestDateTime('1/22/2020, 10:44 PM')];
                 testComponent.dateTimePicker.open();
                 fixture.detectChanges();
 
@@ -1009,7 +1011,7 @@ describe('OwlDateTimeComponent', () => {
         describe('DateTimePicker with too many inputs', () => {
             it('should throw when multiple inputs registered', fakeAsync(() => {
                 const fixture = createComponent(MultiInputDateTimePickerComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 expect(() => fixture.detectChanges()).toThrow();
             }));
@@ -1021,7 +1023,7 @@ describe('OwlDateTimeComponent', () => {
 
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(NoInputDateTimePickerComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 fixture.detectChanges();
 
@@ -1050,7 +1052,7 @@ describe('OwlDateTimeComponent', () => {
 
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(DateTimePickerWithStartAtComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 fixture.detectChanges();
 
@@ -1064,7 +1066,7 @@ describe('OwlDateTimeComponent', () => {
 
             it('should override input value by explicit startAt', () => {
                 expect(testComponent.dateTimePicker.startAt).toEqual(
-                    new Date(2010, JAN, 1)
+                    createTestDateTime(2010, JAN, 1)
                 );
             });
         });
@@ -1077,7 +1079,7 @@ describe('OwlDateTimeComponent', () => {
 
             beforeEach(() => {
                 fixture = createComponent(DateTimePickerWithStartViewComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 fixture.detectChanges();
 
@@ -1186,7 +1188,7 @@ describe('OwlDateTimeComponent', () => {
 
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(DateTimePickerWithNgModelComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 fixture.detectChanges();
                 fixture.whenStable().then(() => {
@@ -1206,8 +1208,8 @@ describe('OwlDateTimeComponent', () => {
                 expect(testComponent.dateTimePickerInput.value).toBeNull();
                 expect(testComponent.dateTimePicker.selected).toBeNull();
 
-                const selected = new Date(2017, JAN, 1);
-                testComponent.moment = selected;
+                const selected = createTestDateTime(2017, JAN, 1);
+                testComponent.dateTime = selected;
                 fixture.detectChanges();
                 flush();
                 fixture.detectChanges();
@@ -1219,10 +1221,10 @@ describe('OwlDateTimeComponent', () => {
             }));
 
             it('should update model when date is selected', fakeAsync(() => {
-                expect(testComponent.moment).toBeNull();
+                expect(testComponent.dateTime).toBeNull();
                 expect(testComponent.dateTimePickerInput.value).toBeNull();
 
-                const selected = new Date(2017, JAN, 1);
+                const selected = createTestDateTime(2017, JAN, 1);
                 testComponent.dateTimePicker.select(selected);
                 fixture.detectChanges();
                 flush();
@@ -1231,7 +1233,7 @@ describe('OwlDateTimeComponent', () => {
                 flush();
                 fixture.detectChanges();
 
-                expect(testComponent.moment).toEqual(selected);
+                expect(testComponent.dateTime).toEqual(selected);
                 expect(testComponent.dateTimePickerInput.value).toEqual(
                     selected
                 );
@@ -1256,7 +1258,7 @@ describe('OwlDateTimeComponent', () => {
 
                 expect(inputEl.classList).toContain('ng-pristine');
 
-                testComponent.dateTimePicker.select(new Date(2017, JAN, 1));
+                testComponent.dateTimePicker.select(createTestDateTime(2017, JAN, 1));
                 fixture.detectChanges();
                 flush();
                 testComponent.dateTimePicker.confirmSelect();
@@ -1273,7 +1275,7 @@ describe('OwlDateTimeComponent', () => {
 
                 expect(inputEl.classList).toContain('ng-pristine');
 
-                testComponent.moment = new Date(2017, JAN, 1);
+                testComponent.dateTime = createTestDateTime(2017, JAN, 1);
                 fixture.detectChanges();
                 flush();
                 fixture.detectChanges();
@@ -1318,7 +1320,7 @@ describe('OwlDateTimeComponent', () => {
 
                 expect(inputEl.classList).toContain('ng-untouched');
 
-                testComponent.dateTimePicker.select(new Date(2017, JAN, 1));
+                testComponent.dateTimePicker.select(createTestDateTime(2017, JAN, 1));
                 fixture.detectChanges();
                 flush();
                 testComponent.dateTimePicker.confirmSelect();
@@ -1346,9 +1348,9 @@ describe('OwlDateTimeComponent', () => {
                         0
                     );
 
-                    const from = new Date(2017, JAN, 1);
-                    const to = new Date(2017, JAN, 3);
-                    testComponent.moment = [from, to];
+                    const from = createTestDateTime(2017, JAN, 1);
+                    const to = createTestDateTime(2017, JAN, 3);
+                    testComponent.dateTime = [from, to];
                     fixture.detectChanges();
                     flush();
                     fixture.detectChanges();
@@ -1374,13 +1376,13 @@ describe('OwlDateTimeComponent', () => {
                 }));
 
                 it('should update model when date is selected', fakeAsync(() => {
-                    expect(testComponent.moment).toBeNull();
+                    expect(testComponent.dateTime).toBeNull();
                     expect(
                         testComponent.dateTimePickerInput.values.length
                     ).toBe(0);
 
-                    const from = new Date(2017, JAN, 1);
-                    const to = new Date(2017, JAN, 3);
+                    const from = createTestDateTime(2017, JAN, 1);
+                    const to = createTestDateTime(2017, JAN, 3);
                     testComponent.dateTimePicker.select([from, to]);
                     fixture.detectChanges();
                     flush();
@@ -1389,8 +1391,9 @@ describe('OwlDateTimeComponent', () => {
                     flush();
                     fixture.detectChanges();
 
-                    expect(testComponent.moment[0]).toEqual(from);
-                    expect(testComponent.moment[1]).toEqual(to);
+                    const selected = testComponent.dateTime as DateTime[];
+                    expect(selected[0]).toEqual(from);
+                    expect(selected[1]).toEqual(to);
                     expect(
                         testComponent.dateTimePickerInput.values.length
                     ).toBe(2);
@@ -1420,8 +1423,8 @@ describe('OwlDateTimeComponent', () => {
                         0
                     );
 
-                    const from = new Date(2017, JAN, 1);
-                    testComponent.moment = [from];
+                    const from = createTestDateTime(2017, JAN, 1);
+                    testComponent.dateTime = [from];
                     fixture.detectChanges();
                     flush();
                     fixture.detectChanges();
@@ -1441,9 +1444,9 @@ describe('OwlDateTimeComponent', () => {
                 }));
 
                 it('should only update fromValue when date is selected', fakeAsync(() => {
-                    const from = new Date(2017, JAN, 1);
-                    const to = new Date(2017, JAN, 3);
-                    testComponent.moment = [from, to];
+                    const from = createTestDateTime(2017, JAN, 1);
+                    const to = createTestDateTime(2017, JAN, 3);
+                    testComponent.dateTime = [from, to];
                     fixture.detectChanges();
                     flush();
                     fixture.detectChanges();
@@ -1452,7 +1455,7 @@ describe('OwlDateTimeComponent', () => {
                     fixture.detectChanges();
                     flush();
 
-                    const newSelectedFrom = new Date(2017, JAN, 2);
+                    const newSelectedFrom = createTestDateTime(2017, JAN, 2);
                     const containerDebugElement = fixture.debugElement.query(
                         By.directive(OwlDateTimeContainerComponent)
                     );
@@ -1478,14 +1481,14 @@ describe('OwlDateTimeComponent', () => {
                     expect(testComponent.dateTimePickerInput.values[1]).toEqual(
                         to
                     );
-                    expect(testComponent.moment[0]).toEqual(newSelectedFrom);
-                    expect(testComponent.moment[1]).toEqual(to);
+                    expect(testComponent.dateTime[0]).toEqual(newSelectedFrom);
+                    expect(testComponent.dateTime[1]).toEqual(to);
                 }));
 
                 it('should update fromValue and set toValue to null when date is selected after toValue', fakeAsync(() => {
-                    const from = new Date(2017, JAN, 1);
-                    const to = new Date(2017, JAN, 3);
-                    testComponent.moment = [from, to];
+                    const from = createTestDateTime(2017, JAN, 1);
+                    const to = createTestDateTime(2017, JAN, 3);
+                    testComponent.dateTime = [from, to];
                     fixture.detectChanges();
                     flush();
                     fixture.detectChanges();
@@ -1494,7 +1497,7 @@ describe('OwlDateTimeComponent', () => {
                     fixture.detectChanges();
                     flush();
 
-                    const newSelectedFrom = new Date(2017, JAN, 4);
+                    const newSelectedFrom = createTestDateTime(2017, JAN, 4);
                     const containerDebugElement = fixture.debugElement.query(
                         By.directive(OwlDateTimeContainerComponent)
                     );
@@ -1520,8 +1523,8 @@ describe('OwlDateTimeComponent', () => {
                     expect(
                         testComponent.dateTimePickerInput.values[1]
                     ).toBeFalsy();
-                    expect(testComponent.moment[0]).toEqual(newSelectedFrom);
-                    expect(testComponent.moment[1]).toBeFalsy();
+                    expect(testComponent.dateTime[0]).toEqual(newSelectedFrom);
+                    expect(testComponent.dateTime[1]).toBeFalsy();
                 }));
             });
 
@@ -1542,8 +1545,8 @@ describe('OwlDateTimeComponent', () => {
                         0
                     );
 
-                    const to = new Date(2017, JAN, 3);
-                    testComponent.moment = [null, to];
+                    const to = createTestDateTime(2017, JAN, 3);
+                    testComponent.dateTime = [null, to];
                     fixture.detectChanges();
                     flush();
                     fixture.detectChanges();
@@ -1563,9 +1566,9 @@ describe('OwlDateTimeComponent', () => {
                 }));
 
                 it('should only update toValue when date is selected', fakeAsync(() => {
-                    const from = new Date(2017, JAN, 1);
-                    const to = new Date(2017, JAN, 3);
-                    testComponent.moment = [from, to];
+                    const from = createTestDateTime(2017, JAN, 1);
+                    const to = createTestDateTime(2017, JAN, 3);
+                    testComponent.dateTime = [from, to];
                     fixture.detectChanges();
                     flush();
                     fixture.detectChanges();
@@ -1574,7 +1577,7 @@ describe('OwlDateTimeComponent', () => {
                     fixture.detectChanges();
                     flush();
 
-                    const newSelectedTo = new Date(2017, JAN, 4);
+                    const newSelectedTo = createTestDateTime(2017, JAN, 4);
                     const containerDebugElement = fixture.debugElement.query(
                         By.directive(OwlDateTimeContainerComponent)
                     );
@@ -1600,14 +1603,14 @@ describe('OwlDateTimeComponent', () => {
                     expect(testComponent.dateTimePickerInput.values[1]).toEqual(
                         newSelectedTo
                     );
-                    expect(testComponent.moment[0]).toEqual(from);
-                    expect(testComponent.moment[1]).toEqual(newSelectedTo);
+                    expect(testComponent.dateTime[0]).toEqual(from);
+                    expect(testComponent.dateTime[1]).toEqual(newSelectedTo);
                 }));
 
                 it('should update toValue and set fromValue to null when date is selected before fromValue', fakeAsync(() => {
-                    const from = new Date(2017, JAN, 2);
-                    const to = new Date(2017, JAN, 3);
-                    testComponent.moment = [from, to];
+                    const from = createTestDateTime(2017, JAN, 2);
+                    const to = createTestDateTime(2017, JAN, 3);
+                    testComponent.dateTime = [from, to];
                     fixture.detectChanges();
                     flush();
                     fixture.detectChanges();
@@ -1616,7 +1619,7 @@ describe('OwlDateTimeComponent', () => {
                     fixture.detectChanges();
                     flush();
 
-                    const newSelectedTo = new Date(2017, JAN, 1);
+                    const newSelectedTo = createTestDateTime(2017, JAN, 1);
                     const containerDebugElement = fixture.debugElement.query(
                         By.directive(OwlDateTimeContainerComponent)
                     );
@@ -1642,8 +1645,8 @@ describe('OwlDateTimeComponent', () => {
                     expect(testComponent.dateTimePickerInput.values[1]).toEqual(
                         newSelectedTo
                     );
-                    expect(testComponent.moment[0]).toBeFalsy();
-                    expect(testComponent.moment[1]).toEqual(newSelectedTo);
+                    expect(testComponent.dateTime[0]).toBeFalsy();
+                    expect(testComponent.dateTime[1]).toEqual(newSelectedTo);
                 }));
             });
         });
@@ -1654,7 +1657,7 @@ describe('OwlDateTimeComponent', () => {
 
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(DateTimePickerWithFormControlComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 fixture.detectChanges();
 
@@ -1670,7 +1673,7 @@ describe('OwlDateTimeComponent', () => {
                 expect(testComponent.dateTimePickerInput.value).toBeNull();
                 expect(testComponent.dateTimePicker.selected).toBeNull();
 
-                const selected = new Date(2017, JAN, 1);
+                const selected = createTestDateTime(2017, JAN, 1);
                 testComponent.formControl.setValue(selected);
                 fixture.detectChanges();
 
@@ -1684,7 +1687,7 @@ describe('OwlDateTimeComponent', () => {
                 expect(testComponent.formControl.value).toBeNull();
                 expect(testComponent.dateTimePickerInput.value).toBeNull();
 
-                const selected = new Date(2017, JAN, 1);
+                const selected = createTestDateTime(2017, JAN, 1);
                 testComponent.dateTimePicker.select(selected);
                 fixture.detectChanges();
                 flush();
@@ -1727,7 +1730,7 @@ describe('OwlDateTimeComponent', () => {
 
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(DateTimePickerWithTriggerComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 fixture.detectChanges();
 
@@ -1800,22 +1803,22 @@ describe('OwlDateTimeComponent', () => {
                 DateTimePickerWithMinAndMaxValidationComponent
             >;
             let testComponent: DateTimePickerWithMinAndMaxValidationComponent;
-            let minMoment;
-            let maxMoment;
+            let minDateTime: DateTime;
+            let maxDateTime: DateTime;
 
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(
                     DateTimePickerWithMinAndMaxValidationComponent,
-                    [OwlNativeDateTimeModule]
+                    [OwlLuxonDateTimeModule]
                 );
                 fixture.detectChanges();
 
                 testComponent = fixture.componentInstance;
 
-                minMoment = new Date(2010, JAN, 1, 0, 30, 30);
-                maxMoment = new Date(2020, JAN, 1, 23, 30, 30);
-                testComponent.min = minMoment;
-                testComponent.max = maxMoment;
+                minDateTime = createTestDateTime(2010, JAN, 1, 0, 30, 30);
+                maxDateTime = createTestDateTime(2020, JAN, 1, 23, 30, 30);
+                testComponent.min = minDateTime;
+                testComponent.max = maxDateTime;
                 fixture.detectChanges();
             }));
 
@@ -1827,15 +1830,15 @@ describe('OwlDateTimeComponent', () => {
 
             it('should use min and max dates specified by the input', () => {
                 expect(testComponent.dateTimePicker.minDateTime).toEqual(
-                    minMoment
+                    minDateTime
                 );
                 expect(testComponent.dateTimePicker.maxDateTime).toEqual(
-                    maxMoment
+                    maxDateTime
                 );
             });
 
-            it('should mark invalid when value is before minMoment', fakeAsync(() => {
-                testComponent.date = new Date(2009, DEC, 31);
+            it('should mark invalid when value is before minDateTime', fakeAsync(() => {
+                testComponent.date = createTestDateTime(2009, DEC, 31);
                 fixture.detectChanges();
                 flush();
                 fixture.detectChanges();
@@ -1846,8 +1849,8 @@ describe('OwlDateTimeComponent', () => {
                 ).toContain('ng-invalid');
             }));
 
-            it('should mark invalid when value is after maxMoment', fakeAsync(() => {
-                testComponent.date = new Date(2020, JAN, 2);
+            it('should mark invalid when value is after maxDateTime', fakeAsync(() => {
+                testComponent.date = createTestDateTime(2020, JAN, 2);
                 fixture.detectChanges();
                 flush();
 
@@ -1859,8 +1862,8 @@ describe('OwlDateTimeComponent', () => {
                 ).toContain('ng-invalid');
             }));
 
-            it('should not mark invalid when value equals minMoment', fakeAsync(() => {
-                testComponent.date = new Date(minMoment);
+            it('should not mark invalid when value equals minDateTime', fakeAsync(() => {
+                testComponent.date = createTestDateTime(minDateTime);
                 fixture.detectChanges();
                 flush();
                 fixture.detectChanges();
@@ -1871,8 +1874,8 @@ describe('OwlDateTimeComponent', () => {
                 ).not.toContain('ng-invalid');
             }));
 
-            it('should not mark invalid when value equals maxMoment', fakeAsync(() => {
-                testComponent.date = new Date(maxMoment);
+            it('should not mark invalid when value equals maxDateTime', fakeAsync(() => {
+                testComponent.date = createTestDateTime(maxDateTime);
                 fixture.detectChanges();
                 flush();
                 fixture.detectChanges();
@@ -1883,8 +1886,8 @@ describe('OwlDateTimeComponent', () => {
                 ).not.toContain('ng-invalid');
             }));
 
-            it('should not mark invalid when value is between minMoment and maxMoment', fakeAsync(() => {
-                testComponent.date = new Date(2010, JAN, 2);
+            it('should not mark invalid when value is between minDateTime and maxDateTime', fakeAsync(() => {
+                testComponent.date = createTestDateTime(2010, JAN, 2);
                 fixture.detectChanges();
                 flush();
                 fixture.detectChanges();
@@ -1895,8 +1898,8 @@ describe('OwlDateTimeComponent', () => {
                 ).not.toContain('ng-invalid');
             }));
 
-            it('should disable all decrease-time buttons when value equals minMoment', fakeAsync(() => {
-                testComponent.date = new Date(minMoment);
+            it('should disable all decrease-time buttons when value equals minDateTime', fakeAsync(() => {
+                testComponent.date = createTestDateTime(minDateTime);
                 fixture.detectChanges();
                 flush();
                 fixture.detectChanges();
@@ -1924,8 +1927,8 @@ describe('OwlDateTimeComponent', () => {
                 expect(decreaseSecondBtn.hasAttribute('disabled')).toBe(true);
             }));
 
-            it('should disable all increase-time buttons when value equals maxMoment', fakeAsync(() => {
-                testComponent.date = new Date(maxMoment);
+            it('should disable all increase-time buttons when value equals maxDateTime', fakeAsync(() => {
+                testComponent.date = createTestDateTime(maxDateTime);
                 fixture.detectChanges();
                 flush();
                 fixture.detectChanges();
@@ -1960,7 +1963,7 @@ describe('OwlDateTimeComponent', () => {
 
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(DateTimePickerWithFilterValidationComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 fixture.detectChanges();
                 testComponent = fixture.componentInstance;
@@ -1973,7 +1976,7 @@ describe('OwlDateTimeComponent', () => {
             }));
 
             it('should mark input invalid', fakeAsync(() => {
-                testComponent.date = new Date(2017, JAN, 1);
+                testComponent.date = createTestDateTime(2017, JAN, 1);
                 fixture.detectChanges();
                 flush();
                 fixture.detectChanges();
@@ -1983,7 +1986,7 @@ describe('OwlDateTimeComponent', () => {
                         .classList
                 ).toContain('ng-invalid');
 
-                testComponent.date = new Date(2017, JAN, 2);
+                testComponent.date = createTestDateTime(2017, JAN, 2);
                 fixture.detectChanges();
                 flush();
                 fixture.detectChanges();
@@ -1995,7 +1998,7 @@ describe('OwlDateTimeComponent', () => {
             }));
 
             it('should disable filtered calendar cells', fakeAsync(() => {
-                testComponent.date = new Date(2017, JAN, 3);
+                testComponent.date = createTestDateTime(2017, JAN, 3);
                 fixture.detectChanges();
                 flush();
                 fixture.detectChanges();
@@ -2035,7 +2038,7 @@ describe('OwlDateTimeComponent', () => {
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(
                     DateTimePickerWithChangeAndInputEventsComponent,
-                    [OwlNativeDateTimeModule]
+                    [OwlLuxonDateTimeModule]
                 );
                 fixture.detectChanges();
                 testComponent = fixture.componentInstance;
@@ -2314,7 +2317,7 @@ describe('OwlDateTimeComponent', () => {
 
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(DateTimePickerWithISOStringsComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 fixture.detectChanges();
                 testComponent = fixture.componentInstance;
@@ -2332,16 +2335,16 @@ describe('OwlDateTimeComponent', () => {
                 fixture.detectChanges();
 
                 expect(testComponent.dateTimePicker.startAt).toEqual(
-                    new Date(2017, JUL, 1)
+                    createTestDateTime(2017, JUL, 1)
                 );
                 expect(testComponent.dateTimePickerInput.value).toEqual(
-                    new Date(2017, JUN, 1)
+                    createTestDateTime(2017, JUN, 1)
                 );
                 expect(testComponent.dateTimePickerInput.min).toEqual(
-                    new Date(2017, JAN, 1)
+                    createTestDateTime(2017, JAN, 1)
                 );
                 expect(testComponent.dateTimePickerInput.max).toEqual(
-                    new Date(2017, DEC, 31)
+                    createTestDateTime(2017, DEC, 31)
                 );
             }));
         });
@@ -2352,7 +2355,7 @@ describe('OwlDateTimeComponent', () => {
 
             beforeEach(fakeAsync(() => {
                 fixture = createComponent(DateTimePickerWithEventsComponent, [
-                    OwlNativeDateTimeModule
+                    OwlLuxonDateTimeModule
                 ]);
                 fixture.detectChanges();
                 testComponent = fixture.componentInstance;
@@ -2406,15 +2409,15 @@ describe('OwlDateTimeComponent', () => {
     `
 })
 class StandardDateTimePickerComponent {
-    date: Date | null = new Date(2020, JAN, 1);
+    date: DateTime | null = createTestDateTime(2020, JAN, 1);
     pickerType = 'both';
     pickerMode = 'popup';
     opened = false;
     disabled = false;
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
     @ViewChild(OwlDateTimeInputDirective, { static: true })
-    dateTimePickerInput: OwlDateTimeInputDirective<Date>;
+    dateTimePickerInput: OwlDateTimeInputDirective<DateTime>;
 }
 
 @Component({
@@ -2426,15 +2429,15 @@ class StandardDateTimePickerComponent {
     `
 })
 class RangeDateTimePickerComponent {
-     dates: Date[] | null = [new Date(2020, JAN, 1), new Date(2020, FEB, 1)];
+     dates: DateTime[] | null = [createTestDateTime(2020, JAN, 1), createTestDateTime(2020, FEB, 1)];
     selectMode = 'range';
     pickerType = 'both';
-    startAt = new Date(2020, JAN, 1);
-    endAt = new Date(2020, JAN, 2);
+    startAt = createTestDateTime(2020, JAN, 1);
+    endAt = createTestDateTime(2020, JAN, 2);
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
     @ViewChild(OwlDateTimeInputDirective, { static: true })
-    dateTimePickerInput: OwlDateTimeInputDirective<Date>;
+    dateTimePickerInput: OwlDateTimeInputDirective<DateTime>;
 }
 
 @Component({
@@ -2455,7 +2458,7 @@ class MultiInputDateTimePickerComponent { }
 })
 class NoInputDateTimePickerComponent {
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
 }
 
 @Component({
@@ -2466,10 +2469,10 @@ class NoInputDateTimePickerComponent {
     `
 })
 class DateTimePickerWithStartAtComponent {
-    date = new Date(2020, JAN, 1);
-    startDate = new Date(2010, JAN, 1);
+    date = createTestDateTime(2020, JAN, 1);
+    startDate = createTestDateTime(2010, JAN, 1);
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
 }
 
 @Component({
@@ -2482,10 +2485,10 @@ class DateTimePickerWithStartAtComponent {
     `
 })
 class DateTimePickerWithStartViewComponent {
-    date = new Date(2020, JAN, 1);
+    date = createTestDateTime(2020, JAN, 1);
     startView = 'month';
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
 
     onMonthSelection() { }
 
@@ -2495,17 +2498,17 @@ class DateTimePickerWithStartViewComponent {
 @Component({
     standalone: false,
     template: `
-        <input [(ngModel)]="moment" [selectMode]="selectMode" [owlDateTime]="dt">
+        <input [(ngModel)]="dateTime" [selectMode]="selectMode" [owlDateTime]="dt">
         <owl-date-time #dt></owl-date-time>
     `
 })
 class DateTimePickerWithNgModelComponent {
-    moment: Date[] | Date | null = null;
+    dateTime: DateTime[] | DateTime | null = null;
     selectMode = 'single';
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
     @ViewChild(OwlDateTimeInputDirective, { static: true })
-    dateTimePickerInput: OwlDateTimeInputDirective<Date>;
+    dateTimePickerInput: OwlDateTimeInputDirective<DateTime>;
 }
 
 @Component({
@@ -2520,11 +2523,11 @@ class DateTimePickerWithNgModelComponent {
 class DateTimePickerWithFormControlComponent {
     formControl = new UntypedFormControl();
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
     @ViewChild(OwlDateTimeInputDirective, { static: true })
-    dateTimePickerInput: OwlDateTimeInputDirective<Date>;
+    dateTimePickerInput: OwlDateTimeInputDirective<DateTime>;
     @ViewChild(OwlDateTimeTriggerDirective, { static: true })
-    dateTimePickerToggle: OwlDateTimeTriggerDirective<Date>;
+    dateTimePickerToggle: OwlDateTimeTriggerDirective<DateTime>;
 }
 
 @Component({
@@ -2537,9 +2540,9 @@ class DateTimePickerWithFormControlComponent {
 })
 class DateTimePickerWithTriggerComponent {
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
     @ViewChild(OwlDateTimeInputDirective, { static: true })
-    dateTimePickerInput: OwlDateTimeInputDirective<Date>;
+    dateTimePickerInput: OwlDateTimeInputDirective<DateTime>;
 }
 
 @Component({
@@ -2553,15 +2556,15 @@ class DateTimePickerWithTriggerComponent {
 })
 class DateTimePickerWithMinAndMaxValidationComponent {
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
     @ViewChild(OwlDateTimeInputDirective, { static: true })
-    dateTimePickerInput: OwlDateTimeInputDirective<Date>;
+    dateTimePickerInput: OwlDateTimeInputDirective<DateTime>;
     @ViewChild(OwlDateTimeTriggerDirective, { static: true })
-    dateTimePickerToggle: OwlDateTimeTriggerDirective<Date>;
+    dateTimePickerToggle: OwlDateTimeTriggerDirective<DateTime>;
 
-    date: Date | null;
-    min: Date;
-    max: Date;
+    date: DateTime | null;
+    min: DateTime;
+    max: DateTime;
 }
 
 @Component({
@@ -2576,13 +2579,13 @@ class DateTimePickerWithMinAndMaxValidationComponent {
 })
 class DateTimePickerWithFilterValidationComponent {
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
     @ViewChild(OwlDateTimeInputDirective, { static: true })
-    dateTimePickerInput: OwlDateTimeInputDirective<Date>;
+    dateTimePickerInput: OwlDateTimeInputDirective<DateTime>;
     @ViewChild(OwlDateTimeTriggerDirective, { static: true })
-    dateTimePickerToggle: OwlDateTimeTriggerDirective<Date>;
-    date: Date;
-    filter = (date: Date) => date.getDate() !== 1;
+    dateTimePickerToggle: OwlDateTimeTriggerDirective<DateTime>;
+    date: DateTime;
+    filter = (date: DateTime) => date.day !== 1;
 }
 
 @Component({
@@ -2599,11 +2602,11 @@ class DateTimePickerWithFilterValidationComponent {
 })
 class DateTimePickerWithChangeAndInputEventsComponent {
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
     @ViewChild(OwlDateTimeInputDirective, { static: true })
-    dateTimePickerInput: OwlDateTimeInputDirective<Date>;
+    dateTimePickerInput: OwlDateTimeInputDirective<DateTime>;
     @ViewChild(OwlDateTimeTriggerDirective, { static: true })
-    dateTimePickerToggle: OwlDateTimeTriggerDirective<Date>;
+    dateTimePickerToggle: OwlDateTimeTriggerDirective<DateTime>;
 
     handleChange() { }
 
@@ -2622,14 +2625,14 @@ class DateTimePickerWithChangeAndInputEventsComponent {
   `
 })
 class DateTimePickerWithISOStringsComponent {
-    value = new Date(2017, JUN, 1).toISOString();
-    min = new Date(2017, JAN, 1).toISOString();
-    max = new Date(2017, DEC, 31).toISOString();
-    startAt = new Date(2017, JUL, 1).toISOString();
+    value = createTestDateTime(2017, JUN, 1).toISO();
+    min = createTestDateTime(2017, JAN, 1).toISO();
+    max = createTestDateTime(2017, DEC, 31).toISO();
+    startAt = createTestDateTime(2017, JUL, 1).toISO();
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
     @ViewChild(OwlDateTimeInputDirective, { static: true })
-    dateTimePickerInput: OwlDateTimeInputDirective<Date>;
+    dateTimePickerInput: OwlDateTimeInputDirective<DateTime>;
 }
 
 @Component({
@@ -2640,9 +2643,9 @@ class DateTimePickerWithISOStringsComponent {
   `
 })
 class DateTimePickerWithEventsComponent {
-    selected: Date | null = null;
+    selected: DateTime | null = null;
     openedSpy = jasmine.createSpy('opened spy');
     closedSpy = jasmine.createSpy('closed spy');
     @ViewChild('dt', { static: true })
-    dateTimePicker: OwlDateTimeComponent<Date>;
+    dateTimePicker: OwlDateTimeComponent<DateTime>;
 }

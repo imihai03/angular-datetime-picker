@@ -307,10 +307,10 @@ export class OwlDateTimeInlineComponent<T> extends OwlDateTime<T>
     public writeValue(value: any): void {
         if (this.isInSingleMode) {
             this.value = value;
-            this.container.pickerMoment = value;
+            this.container.pickerDateTime = value;
         } else {
             this.values = value;
-            this.container.pickerMoment = this._values[
+            this.container.pickerDateTime = this._values[
                 this.container.activeSelectedIndex
             ];
         }
