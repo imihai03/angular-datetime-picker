@@ -6,112 +6,112 @@ import { NoopScrollStrategy, ScrollStrategy } from '@angular/cdk/overlay';
 
 let uniqueId = 0;
 
-/** Possible overrides for a dialog's position. */
+/** Возможные переопределения положения диалогового окна */
 export interface DialogPosition {
-    /** Override for the dialog's top position. */
+    /** Переопределение отступа диалогового окна сверху */
     top?: string;
 
-    /** Override for the dialog's bottom position. */
+    /** Переопределение отступа диалогового окна снизу */
     bottom?: string;
 
-    /** Override for the dialog's left position. */
+    /** Переопределение отступа диалогового окна слева */
     left?: string;
 
-    /** Override for the dialog's right position. */
+    /** Переопределение отступа диалогового окна справа */
     right?: string;
 }
 
 export interface OwlDialogConfigInterface {
     /**
-     * ID of the element that describes the dialog.
+     * ID элемента с описанием диалогового окна
      */
     ariaDescribedBy?: string | null;
 
     /**
-     * Whether to focus the dialog when the dialog is opened
+     * Нужно ли переводить фокус на диалоговое окно при открытии
      */
     autoFocus?: boolean;
 
-    /** Whether the dialog has a backdrop. */
+    /** Есть ли у диалогового окна фон */
     hasBackdrop?: boolean;
 
     /**
-     * Custom style for the backdrop
+     * Пользовательский стиль фона
      * */
     backdropStyle?: any;
 
-    /** Data being injected into the child component. */
+    /** Данные, передаваемые в дочерний компонент через DI */
     data?: any ;
 
-    /** Whether the user can use escape or clicking outside to close a modal. */
+    /** Может ли пользователь закрыть диалоговое окно клавишей Escape или нажатием за его пределами */
     disableClose?: boolean;
 
     /**
-     * ID for the modal. If omitted, a unique one will be generated.
+     * ID диалогового окна; если не указан, создаётся уникальный ID
      */
     id?: string;
 
     /**
-     * The ARIA role of the dialog element.
+     * ARIA-роль элемента диалогового окна
      */
     role?: 'dialog' | 'alertdialog';
 
     /**
-     * Custom class for the pane
+     * Пользовательский класс панели
      * */
     paneClass?: string | string[];
 
     /**
-     * Mouse Event
+     * Событие мыши
      * */
     event?: MouseEvent;
 
     /**
-     * Custom class for the backdrop
+     * Пользовательский класс фона
      * */
     backdropClass?: string | string[];
 
     /**
-     * Whether the dialog should close when the user goes backwards/forwards in history.
+     * Нужно ли закрывать диалоговое окно при переходе назад или вперёд в истории браузера
      * */
     closeOnNavigation?: boolean;
 
-    /** Width of the dialog. */
+    /** Ширина диалогового окна */
     width?: string ;
 
-    /** Height of the dialog. */
+    /** Высота диалогового окна */
     height?: string;
 
     /**
-     * The min-width of the overlay panel.
-     * If a number is provided, pixel units are assumed.
+     * Минимальная ширина overlay-панели
+     * Числовое значение задаётся в пикселях
      * */
     minWidth?: number | string;
 
     /**
-     * The min-height of the overlay panel.
-     * If a number is provided, pixel units are assumed.
+     * Минимальная высота overlay-панели
+     * Числовое значение задаётся в пикселях
      * */
     minHeight?: number | string;
 
     /**
-     * The max-width of the overlay panel.
-     * If a number is provided, pixel units are assumed.
+     * Максимальная ширина overlay-панели
+     * Числовое значение задаётся в пикселях
      * */
     maxWidth?: number | string;
 
     /**
-     * The max-height of the overlay panel.
-     * If a number is provided, pixel units are assumed.
+     * Максимальная высота overlay-панели
+     * Числовое значение задаётся в пикселях
      * */
     maxHeight?: number | string;
 
-    /** Position overrides. */
+    /** Переопределения положения */
     position?: DialogPosition;
 
     /**
-     * The scroll strategy when the dialog is open
-     * Learn more this from https://material.angular.io/cdk/overlay/overview#scroll-strategies
+     * Стратегия прокрутки при открытом диалоговом окне
+     * Подробнее: https://material.angular.io/cdk/overlay/overview#scroll-strategies
      * */
     scrollStrategy?: ScrollStrategy;
 
@@ -120,95 +120,95 @@ export interface OwlDialogConfigInterface {
 
 export class OwlDialogConfig implements OwlDialogConfigInterface {
     /**
-     * ID of the element that describes the dialog.
+     * ID элемента с описанием диалогового окна
      */
     public ariaDescribedBy: string | null = null;
 
     /**
-     * Whether to focus the dialog when the dialog is opened
+     * Нужно ли переводить фокус на диалоговое окно при открытии
      */
     public autoFocus = true;
 
-    /** Whether the dialog has a backdrop. */
+    /** Есть ли у диалогового окна фон */
     public hasBackdrop = true;
 
     /**
-     * Custom style for the backdrop
+     * Пользовательский стиль фона
      * */
     public backdropStyle: any;
 
-    /** Data being injected into the child component. */
+    /** Данные, передаваемые в дочерний компонент через DI */
     public data: any = null;
 
-    /** Whether the user can use escape or clicking outside to close a modal. */
+    /** Может ли пользователь закрыть диалоговое окно клавишей Escape или нажатием за его пределами */
     public disableClose = false;
 
     /**
-     * ID for the modal. If omitted, a unique one will be generated.
+     * ID диалогового окна; если не указан, создаётся уникальный ID
      */
     public id: string;
 
     /**
-     * The ARIA role of the dialog element.
+     * ARIA-роль элемента диалогового окна
      */
     public role: 'dialog' | 'alertdialog' = 'dialog';
 
     /**
-     * Custom class for the pane
+     * Пользовательский класс панели
      * */
     public paneClass: string | string[] = '';
 
     /**
-     * Mouse Event
+     * Событие мыши
      * */
     public event: MouseEvent = null;
 
     /**
-     * Custom class for the backdrop
+     * Пользовательский класс фона
      * */
     public backdropClass: string | string[] = '';
 
     /**
-     * Whether the dialog should close when the user goes backwards/forwards in history.
+     * Нужно ли закрывать диалоговое окно при переходе назад или вперёд в истории браузера
      * */
     public closeOnNavigation = true;
 
-    /** Width of the dialog. */
+    /** Ширина диалогового окна */
     public width = '';
 
-    /** Height of the dialog. */
+    /** Высота диалогового окна */
     public height = '';
 
     /**
-     * The min-width of the overlay panel.
-     * If a number is provided, pixel units are assumed.
+     * Минимальная ширина overlay-панели
+     * Числовое значение задаётся в пикселях
      * */
     public minWidth: number | string;
 
     /**
-     * The min-height of the overlay panel.
-     * If a number is provided, pixel units are assumed.
+     * Минимальная высота overlay-панели
+     * Числовое значение задаётся в пикселях
      * */
     public minHeight: number | string;
 
     /**
-     * The max-width of the overlay panel.
-     * If a number is provided, pixel units are assumed.
+     * Максимальная ширина overlay-панели
+     * Числовое значение задаётся в пикселях
      * */
     public maxWidth: number | string = '85vw';
 
     /**
-     * The max-height of the overlay panel.
-     * If a number is provided, pixel units are assumed.
+     * Максимальная высота overlay-панели
+     * Числовое значение задаётся в пикселях
      * */
     public maxHeight: number | string;
 
-    /** Position overrides. */
+    /** Переопределения положения */
     public position: DialogPosition;
 
     /**
-     * The scroll strategy when the dialog is open
-     * Learn more this from https://material.angular.io/cdk/overlay/overview#scroll-strategies
+     * Стратегия прокрутки при открытом диалоговом окне
+     * Подробнее: https://material.angular.io/cdk/overlay/overview#scroll-strategies
      * */
     public scrollStrategy: ScrollStrategy = new NoopScrollStrategy();
 

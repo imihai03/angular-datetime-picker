@@ -1,8 +1,8 @@
 /*
-  This is a "Solution Style" tsconfig.json file, and is used by editors and TypeScript’s language server to improve development experience.
-  It is not intended to be used to perform a compilation.
+  Этот tsconfig.json использует «Solution Style» для редакторов и языкового сервера TypeScript
+  Он не предназначен для непосредственной компиляции
 
-  To learn more about this file see: https://angular.io/config/solution-tsconfig.
+  Подробнее об этом файле: https://angular.io/config/solution-tsconfig
 */
 {
   "compilerOptions": {

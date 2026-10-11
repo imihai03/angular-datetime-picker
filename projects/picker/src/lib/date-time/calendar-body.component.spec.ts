@@ -3,22 +3,25 @@
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CalendarCell, OwlCalendarBodyComponent } from './calendar-body.component';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, provideZoneChangeDetection } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { By } from '@angular/platform-browser';
 
-describe('OwlCalendarBodyComponent', () => {
+describe('Компонент OwlCalendarBodyComponent', () => {
     beforeEach((() => {
         TestBed.configureTestingModule({
+            imports: [CommonModule],
+            providers: [provideZoneChangeDetection()],
             declarations: [
                 OwlCalendarBodyComponent,
 
-                // Test components
+                // Тестовые компоненты
                 StandardCalendarBodyComponent,
             ],
         }).compileComponents();
     }));
 
-    describe('standard CalendarBodyComponent', () => {
+    describe('Стандартный CalendarBodyComponent', () => {
         let fixture: ComponentFixture<StandardCalendarBodyComponent>;
         let testComponent: StandardCalendarBodyComponent;
         let calendarBodyNativeElement: Element;
@@ -41,24 +44,24 @@ describe('OwlCalendarBodyComponent', () => {
             refreshElementLists();
         });
 
-        it('should create body', () => {
+        it('создаёт тело календаря', () => {
             expect(rowEls.length).toBe(2);
             expect(cellEls.length).toBe(14);
         });
 
-        it('should highlight today', () => {
+        it('выделяет сегодняшний день', () => {
             const todayCell = calendarBodyNativeElement.querySelector('.owl-dt-calendar-cell-today');
             expect(todayCell).not.toBeNull();
             expect(todayCell.innerHTML.trim()).toBe('3');
         });
 
-        it('should highlight selected', () => {
+        it('выделяет выбранную дату', () => {
             const selectedCell = calendarBodyNativeElement.querySelector('.owl-dt-calendar-cell-selected');
             expect(selectedCell).not.toBeNull();
             expect(selectedCell.innerHTML.trim()).toBe('4');
         });
 
-        it('cell should be selected on click', () => {
+        it('выбирает ячейку при нажатии', () => {
             spyOn(testComponent, 'handleSelect');
             expect(testComponent.handleSelect).not.toHaveBeenCalled();
             const todayElement =
@@ -69,12 +72,12 @@ describe('OwlCalendarBodyComponent', () => {
             expect(testComponent.handleSelect).toHaveBeenCalled();
         });
 
-        it('should mark active date', () => {
+        it('отмечает активную дату', () => {
             expect((cellEls[10] as HTMLElement).innerText.trim()).toBe('11');
             expect(cellEls[10].classList).toContain('owl-dt-calendar-cell-active');
         });
 
-        it('should have aria-current set for today', () => {
+        it('устанавливает aria-current для сегодняшнего дня', () => {
             const currentCells = calendarBodyNativeElement.querySelectorAll('.owl-dt-calendar-cell[aria-current]');
             expect(currentCells.length).toBe(1);
             const todayCell = calendarBodyNativeElement.querySelector('.owl-dt-calendar-cell-today');
@@ -82,7 +85,7 @@ describe('OwlCalendarBodyComponent', () => {
             expect(currentCells[0].firstChild).toBe(todayCell);
         });
 
-        it('should have aria-selected set on selected cells', () => {
+        it('устанавливает aria-selected для выбранных ячеек', () => {
             const calendarCells = calendarBodyNativeElement.querySelectorAll('.owl-dt-calendar-cell');
             const selectedCells = calendarBodyNativeElement.querySelectorAll('.owl-dt-calendar-cell[aria-selected=true]');
             const nonSelectedCells = calendarBodyNativeElement.querySelectorAll('.owl-dt-calendar-cell[aria-selected=false]');
@@ -94,6 +97,7 @@ describe('OwlCalendarBodyComponent', () => {
 });
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Default,
     standalone: false,
     template: `
         <table owl-date-time-calendar-body

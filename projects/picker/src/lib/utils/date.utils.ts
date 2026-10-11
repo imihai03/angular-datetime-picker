@@ -3,8 +3,8 @@
  */
 
 /**
- * Creates a date with the given year, month, date, hour, minute and second. Does not allow over/under-flow of the
- * month and date.
+ * Создаёт дату с указанными годом, месяцем, числом, часом, минутой и секундой без выхода
+ * месяца и числа за допустимые границы
  */
 export function createDate(
     year: number,
@@ -53,8 +53,8 @@ export function createDate(
         seconds
     );
 
-    // Check that the date wasn't above the upper bound for the month, causing the month to overflow
-    // For example, createDate(2017, 1, 31) would try to create a date 2017/02/31 which is invalid
+    // Проверяем, что число не превышает количество дней в месяце и не переносится в следующий месяц
+    // Например, createDate(2017, 1, 31) пытается создать несуществующую дату 2017/02/31
     if (result.getMonth() !== month) {
         throw Error(
             `Invalid date "${date}" for month with index "${month}".`
@@ -65,7 +65,7 @@ export function createDate(
 }
 
 /**
- * Gets the number of days in the month of the given date.
+ * Возвращает количество дней в месяце указанной даты
  */
 export function getNumDaysInMonth(date: Date): number {
     const lastDateOfMonth = createDateWithOverflow(
@@ -78,7 +78,7 @@ export function getNumDaysInMonth(date: Date): number {
 }
 
 /**
- * Creates a date but allows the month and date to overflow.
+ * Создаёт дату с допустимым переносом месяца и числа за их границы
  */
 function createDateWithOverflow(
     year: number,
@@ -88,10 +88,9 @@ function createDateWithOverflow(
     minutes: number = 0,
     seconds: number = 0
 ): Date {
-    const result = new Date(year, month, date, hours, minutes, seconds);
-
-    if (year >= 0 && year < 100) {
-        result.setFullYear(result.getFullYear() - 1900);
-    }
+    // setFullYear не позволяет конструктору Date интерпретировать годы 0–99 как 1900–1999
+    const result = new Date(0);
+    result.setFullYear(year, month, date);
+    result.setHours(hours, minutes, seconds, 0);
     return result;
 }

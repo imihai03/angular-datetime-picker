@@ -1,4 +1,4 @@
-# Editor configuration, see http://editorconfig.org
+# Настройки редактора, документация: http://editorconfig.org
 root = true
 
 [*]

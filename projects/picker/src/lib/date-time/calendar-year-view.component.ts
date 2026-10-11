@@ -2,42 +2,13 @@
  * calendar-year-view.component
  */
 
-import {
-    AfterContentInit,
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Inject,
-    Input,
-    OnDestroy,
-    OnInit,
-    Optional,
-    Output,
-    ViewChild
-} from '@angular/core';
-import {
-    CalendarCell,
-    OwlCalendarBodyComponent
-} from './calendar-body.component';
+import { AfterContentInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Optional, Output, ViewChild } from '@angular/core';
+import { CalendarCell, OwlCalendarBodyComponent } from './calendar-body.component';
 import { DateTimeAdapter } from './adapter/date-time-adapter.class';
-import {
-    OWL_DATE_TIME_FORMATS,
-    OwlDateTimeFormats
-} from './adapter/date-time-format.class';
+import { OWL_DATE_TIME_FORMATS, OwlDateTimeFormats } from './adapter/date-time-format.class';
 import { Subscription } from 'rxjs';
 import { SelectMode } from './date-time.class';
-import {
-    DOWN_ARROW,
-    END,
-    ENTER,
-    HOME,
-    LEFT_ARROW,
-    PAGE_DOWN,
-    PAGE_UP,
-    RIGHT_ARROW,
-    UP_ARROW
-} from '@angular/cdk/keycodes';
+import { DOWN_ARROW, END, ENTER, HOME, LEFT_ARROW, PAGE_DOWN, PAGE_UP, RIGHT_ARROW, UP_ARROW } from '@angular/cdk/keycodes';
 
 const MONTHS_PER_YEAR = 12;
 const MONTHS_PER_ROW = 3;
@@ -57,9 +28,10 @@ const MONTHS_PER_ROW = 3;
 export class OwlYearViewComponent<T>
     implements OnInit, AfterContentInit, OnDestroy {
     /**
-     * The select mode of the picker;
+     * Массив номеров месяцев из selectedDates
+     * Значение — номер месяца в текущем году
      * */
-    private _selectMode: SelectMode = 'single';
+    public selectedMonths: number[] = [];
     @Input()
     get selectMode(): SelectMode {
         return this._selectMode;
@@ -72,9 +44,11 @@ export class OwlYearViewComponent<T>
             this.cdRef.markForCheck();
         }
     }
-
-    /** The currently selected date. */
-    private _selected: T | null;
+    /**
+     * Обработчик выбора нового месяца
+     * */
+    @Output()
+    readonly change = new EventEmitter<T>();
     @Input()
     get selected(): T | null {
         return this._selected;
@@ -91,41 +65,23 @@ export class OwlYearViewComponent<T>
     get selecteds(): T[] {
         return this._selecteds;
     }
-
-    set selecteds(values: T[]) {
-        this._selecteds = [];
-        for (let i = 0; i < values.length; i++) {
-            const value = this.dateTimeAdapter.deserialize(values[i]);
-            this._selecteds.push(this.getValidDate(value));
-        }
-
-        this.setSelectedMonths();
-    }
+    /**
+     * Передаёт выбранный год, не изменяя выбранную дату
+     * */
+    @Output()
+    readonly monthSelected = new EventEmitter<T>();
 
     private _pickerDateTime: T | null;
     @Input()
     get pickerDateTime() {
         return this._pickerDateTime;
     }
-
-    set pickerDateTime(value: T) {
-        const oldDateTime = this._pickerDateTime;
-        value = this.dateTimeAdapter.deserialize(value);
-        this._pickerDateTime =
-            this.getValidDate(value) || this.dateTimeAdapter.now();
-
-        if (
-            !this.hasSameYear(oldDateTime, this._pickerDateTime) &&
-            this.initiated
-        ) {
-            this.generateMonthList();
-        }
-    }
-
-    /**
-     * A function used to filter which dates are selectable
-     * */
-    private _dateFilter: (date: T) => boolean;
+    /** Событие активации любой даты */
+    @Output()
+    readonly pickerDateTimeChange: EventEmitter<T> = new EventEmitter<T>();
+    /** Событие выбора ячейки календаря клавишей Enter */
+    @Output()
+    readonly keyboardEnter: EventEmitter<any> = new EventEmitter<any>();
     @Input()
     get dateFilter() {
         return this._dateFilter;
@@ -137,9 +93,9 @@ export class OwlYearViewComponent<T>
             this.generateMonthList();
         }
     }
-
-    /** The minimum selectable date. */
-    private _minDate: T | null;
+    /** Тело таблицы календаря */
+    @ViewChild(OwlCalendarBodyComponent, { static: true })
+    calendarBodyElm: OwlCalendarBodyComponent;
     @Input()
     get minDate(): T | null {
         return this._minDate;
@@ -152,9 +108,10 @@ export class OwlYearViewComponent<T>
             this.generateMonthList();
         }
     }
-
-    /** The maximum selectable date. */
-    private _maxDate: T | null;
+    /**
+     * Режим выбора даты
+     * */
+    private _selectMode: SelectMode = 'single';
     @Input()
     get maxDate(): T | null {
         return this._maxDate;
@@ -167,19 +124,17 @@ export class OwlYearViewComponent<T>
             this.generateMonthList();
         }
     }
-
-    private readonly monthNames: string[];
+    /** Текущая выбранная дата */
+    private _selected: T | null;
 
     private _months: CalendarCell[][];
     get months() {
         return this._months;
     }
-
-    get activeCell(): number {
-        if (this._pickerDateTime) {
-            return this.dateTimeAdapter.getMonth(this._pickerDateTime);
-        }
-    }
+    /**
+     * Функция, определяющая доступные для выбора даты
+     * */
+    private _dateFilter: (date: T) => boolean;
 
     get isInSingleMode(): boolean {
         return this.selectMode === 'single';
@@ -198,36 +153,41 @@ export class OwlYearViewComponent<T>
     private initiated = false;
 
     public todayMonth: number | null;
+    /** Минимальная доступная для выбора дата */
+    private _minDate: T | null;
+    /** Максимальная доступная для выбора дата */
+    private _maxDate: T | null;
+    private monthNames: string[];
 
-    /**
-     * An array to hold all selectedDates' month value
-     * the value is the month number in current year
-     * */
-    public selectedMonths: number[] = [];
+    set selecteds(values: T[]) {
+        this._selecteds = [];
+        for (let i = 0; i < (values?.length ?? 0); i++) {
+            const value = this.dateTimeAdapter.deserialize(values[i]);
+            this._selecteds.push(this.getValidDate(value));
+        }
 
-    /**
-     * Callback to invoke when a new month is selected
-     * */
-    @Output()
-    readonly change = new EventEmitter<T>();
+        this.setSelectedMonths();
+    }
 
-    /**
-     * Emits the selected year. This doesn't imply a change on the selected date
-     * */
-    @Output()
-    readonly monthSelected = new EventEmitter<T>();
+    set pickerDateTime(value: T) {
+        const oldDateTime = this._pickerDateTime;
+        value = this.dateTimeAdapter.deserialize(value);
+        this._pickerDateTime =
+            this.getValidDate(value) ?? this.dateTimeAdapter.now();
 
-    /** Emits when any date is activated. */
-    @Output()
-    readonly pickerDateTimeChange: EventEmitter<T> = new EventEmitter<T>();
+        if (
+            !this.hasSameYear(oldDateTime, this._pickerDateTime) &&
+            this.initiated
+        ) {
+            this.generateMonthList();
+        }
+    }
 
-    /** Emits when use keyboard enter to select a calendar cell */
-    @Output()
-    readonly keyboardEnter: EventEmitter<any> = new EventEmitter<any>();
-
-    /** The body of calendar table */
-    @ViewChild(OwlCalendarBodyComponent, { static: true })
-    calendarBodyElm: OwlCalendarBodyComponent;
+    get activeCell(): number {
+        if (this._pickerDateTime != null) {
+            return this.dateTimeAdapter.getMonth(this._pickerDateTime);
+        }
+    }
 
     get owlDTCalendarView(): boolean {
         return true;
@@ -245,6 +205,7 @@ export class OwlYearViewComponent<T>
 
     public ngOnInit() {
         this.localeSub = this.dateTimeAdapter.localeChanges.subscribe(() => {
+            this.monthNames = this.dateTimeAdapter.getMonthNames('short');
             this.generateMonthList();
             this.cdRef.markForCheck();
         });
@@ -260,14 +221,109 @@ export class OwlYearViewComponent<T>
     }
 
     /**
-     * Handle a calendarCell selected
+     * Обрабатывает выбор ячейки календаря
      */
     public selectCalendarCell(cell: CalendarCell): void {
-        this.selectMonth(cell.value);
+        if (cell.enabled) {
+            this.selectMonth(cell.value);
+        }
     }
 
     /**
-     * Handle a new month selected
+     * Обрабатывает keydown в таблице календаря
+     */
+    public handleCalendarKeydown(event: KeyboardEvent): void {
+        let dateTime;
+        switch (event.keyCode) {
+            // На один месяц назад
+            case LEFT_ARROW:
+                dateTime = this.dateTimeAdapter.addCalendarMonths(
+                    this.pickerDateTime,
+                    -1
+                );
+                this.pickerDateTimeChange.emit(dateTime);
+                break;
+
+            // На один месяц вперёд
+            case RIGHT_ARROW:
+                dateTime = this.dateTimeAdapter.addCalendarMonths(
+                    this.pickerDateTime,
+                    1
+                );
+                this.pickerDateTimeChange.emit(dateTime);
+                break;
+
+            // На три месяца назад
+            case UP_ARROW:
+                dateTime = this.dateTimeAdapter.addCalendarMonths(
+                    this.pickerDateTime,
+                    -3
+                );
+                this.pickerDateTimeChange.emit(dateTime);
+                break;
+
+            // На три месяца вперёд
+            case DOWN_ARROW:
+                dateTime = this.dateTimeAdapter.addCalendarMonths(
+                    this.pickerDateTime,
+                    3
+                );
+                this.pickerDateTimeChange.emit(dateTime);
+                break;
+
+            // К первому месяцу текущего года
+            case HOME:
+                dateTime = this.dateTimeAdapter.addCalendarMonths(
+                    this.pickerDateTime,
+                    -this.dateTimeAdapter.getMonth(this.pickerDateTime)
+                );
+                this.pickerDateTimeChange.emit(dateTime);
+                break;
+
+            // К последнему месяцу текущего года
+            case END:
+                dateTime = this.dateTimeAdapter.addCalendarMonths(
+                    this.pickerDateTime,
+                    11 - this.dateTimeAdapter.getMonth(this.pickerDateTime)
+                );
+                this.pickerDateTimeChange.emit(dateTime);
+                break;
+
+            // На один год (или десять лет) назад
+            case PAGE_UP:
+                dateTime = this.dateTimeAdapter.addCalendarYears(
+                    this.pickerDateTime,
+                    event.altKey ? -10 : -1
+                );
+                this.pickerDateTimeChange.emit(dateTime);
+                break;
+
+            // На один год (или десять лет) вперёд
+            case PAGE_DOWN:
+                dateTime = this.dateTimeAdapter.addCalendarYears(
+                    this.pickerDateTime,
+                    event.altKey ? 10 : 1
+                );
+                this.pickerDateTimeChange.emit(dateTime);
+                break;
+
+            // Выбирает текущий месяц
+            case ENTER:
+                if (this.isMonthEnabled(this.dateTimeAdapter.getMonth(this.pickerDateTime))) {
+                    this.selectMonth(this.dateTimeAdapter.getMonth(this.pickerDateTime));
+                    this.keyboardEnter.emit();
+                }
+                break;
+            default:
+                return;
+        }
+
+        this.focusActiveCell();
+        event.preventDefault();
+    }
+
+    /**
+     * Обрабатывает выбор нового месяца
      */
     private selectMonth(month: number): void {
         const firstDateOfMonth = this.dateTimeAdapter.createDate(
@@ -297,103 +353,10 @@ export class OwlYearViewComponent<T>
     }
 
     /**
-     * Handle keydown event on calendar body
-     */
-    public handleCalendarKeydown(event: KeyboardEvent): void {
-        let dateTime;
-        switch (event.keyCode) {
-            // minus 1 month
-            case LEFT_ARROW:
-                dateTime = this.dateTimeAdapter.addCalendarMonths(
-                    this.pickerDateTime,
-                    -1
-                );
-                this.pickerDateTimeChange.emit(dateTime);
-                break;
-
-            // add 1 month
-            case RIGHT_ARROW:
-                dateTime = this.dateTimeAdapter.addCalendarMonths(
-                    this.pickerDateTime,
-                    1
-                );
-                this.pickerDateTimeChange.emit(dateTime);
-                break;
-
-            // minus 3 months
-            case UP_ARROW:
-                dateTime = this.dateTimeAdapter.addCalendarMonths(
-                    this.pickerDateTime,
-                    -3
-                );
-                this.pickerDateTimeChange.emit(dateTime);
-                break;
-
-            // add 3 months
-            case DOWN_ARROW:
-                dateTime = this.dateTimeAdapter.addCalendarMonths(
-                    this.pickerDateTime,
-                    3
-                );
-                this.pickerDateTimeChange.emit(dateTime);
-                break;
-
-            // move to first month of current year
-            case HOME:
-                dateTime = this.dateTimeAdapter.addCalendarMonths(
-                    this.pickerDateTime,
-                    -this.dateTimeAdapter.getMonth(this.pickerDateTime)
-                );
-                this.pickerDateTimeChange.emit(dateTime);
-                break;
-
-            // move to last month of current year
-            case END:
-                dateTime = this.dateTimeAdapter.addCalendarMonths(
-                    this.pickerDateTime,
-                    11 - this.dateTimeAdapter.getMonth(this.pickerDateTime)
-                );
-                this.pickerDateTimeChange.emit(dateTime);
-                break;
-
-            // minus 1 year (or 10 year)
-            case PAGE_UP:
-                dateTime = this.dateTimeAdapter.addCalendarYears(
-                    this.pickerDateTime,
-                    event.altKey ? -10 : -1
-                );
-                this.pickerDateTimeChange.emit(dateTime);
-                break;
-
-            // add 1 year (or 10 year)
-            case PAGE_DOWN:
-                dateTime = this.dateTimeAdapter.addCalendarYears(
-                    this.pickerDateTime,
-                    event.altKey ? 10 : 1
-                );
-                this.pickerDateTimeChange.emit(dateTime);
-                break;
-
-            // Select current month
-            case ENTER:
-                this.selectMonth(
-                    this.dateTimeAdapter.getMonth(this.pickerDateTime)
-                );
-                this.keyboardEnter.emit();
-                break;
-            default:
-                return;
-        }
-
-        this.focusActiveCell();
-        event.preventDefault();
-    }
-
-    /**
-     * Generate the calendar month list
+     * Создаёт список месяцев календаря
      * */
     private generateMonthList(): void {
-        if (!this.pickerDateTime) {
+        if (this.pickerDateTime == null) {
             return;
         }
 
@@ -419,7 +382,7 @@ export class OwlYearViewComponent<T>
     }
 
     /**
-     * Creates an CalendarCell for the given month.
+     * Создаёт CalendarCell для указанного месяца
      */
     private createMonthCell(month: number): CalendarCell {
         const startDateOfMonth = this.dateTimeAdapter.createDate(
@@ -443,7 +406,7 @@ export class OwlYearViewComponent<T>
     }
 
     /**
-     * Check if the given month is enable
+     * Проверяет доступность указанного месяца для выбора
      */
     private isMonthEnabled(month: number): boolean {
         const firstDateOfMonth = this.dateTimeAdapter.createDate(
@@ -452,19 +415,19 @@ export class OwlYearViewComponent<T>
             1
         );
 
-        // If any date in the month is selectable,
-        // we count the month as enable
+        // Если в месяце доступна для выбора хотя бы одна дата,
+        // считаем месяц доступным для выбора
         for (
             let date = firstDateOfMonth;
             this.dateTimeAdapter.getMonth(date) === month;
             date = this.dateTimeAdapter.addCalendarDays(date, 1)
         ) {
             if (
-                !!date &&
+                date != null &&
                 (!this.dateFilter || this.dateFilter(date)) &&
-                (!this.minDate ||
+                (this.minDate == null ||
                     this.dateTimeAdapter.compare(date, this.minDate) >= 0) &&
-                (!this.maxDate ||
+                (this.maxDate == null ||
                     this.dateTimeAdapter.compare(date, this.maxDate) <= 0)
             ) {
                 return true;
@@ -475,19 +438,19 @@ export class OwlYearViewComponent<T>
     }
 
     /**
-     * Gets the month in this year that the given Date falls on.
-     * Returns null if the given Date is in another year.
+     * Возвращает месяц указанной даты в текущем году
+     * Возвращает null, если указанная дата находится в другом году
      */
     private getMonthInCurrentYear(date: T | null): number {
-        if (this.getValidDate(date) && this.getValidDate(this._pickerDateTime)) {
+        if (this.getValidDate(date) != null && this.getValidDate(this._pickerDateTime) != null) {
             const result = this.dateTimeAdapter.compareYear(
                 date,
                 this._pickerDateTime
             );
 
-            // < 0: the selected date is in an earlier year, so return -1.
-            // > 0: the selected date is in a later year, so return 12.
-            // 0: both values are in the same year, so return the actual month.
+            // < 0: выбранная дата находится в предыдущем году, поэтому возвращаем -1
+            // > 0: выбранная дата находится в следующем году, поэтому возвращаем 12
+            // 0: оба значения находятся в одном году, поэтому возвращаем номер месяца
             if (result < 0) {
                 return -1;
             } else if (result > 0) {
@@ -501,13 +464,13 @@ export class OwlYearViewComponent<T>
     }
 
     /**
-     * Set the selectedMonths value
-     * In single mode, it has only one value which represent the month the selected date in
-     * In range mode, it would has two values, one for the month the fromValue in and the other for the month the toValue in
+     * Задаёт значение selectedMonths
+     * В режиме single содержит одно значение — месяц выбранной даты
+     * В режиме range содержит два значения: месяц fromValue и месяц toValue
      * */
     private setSelectedMonths(): void {
         this.selectedMonths = [];
-        if (this.isInSingleMode && this.selected) {
+        if (this.isInSingleMode && this.selected != null) {
             this.selectedMonths[0] = this.getMonthInCurrentYear(this.selected);
         }
 
@@ -522,19 +485,19 @@ export class OwlYearViewComponent<T>
     }
 
     /**
-     * Check the given dates are in the same year
+     * Проверяет, находятся ли указанные даты в одном году
      */
     private hasSameYear(dateLeft: T, dateRight: T) {
         return !!(
-            dateLeft &&
-            dateRight &&
+            dateLeft != null &&
+            dateRight != null &&
             this.dateTimeAdapter.getYear(dateLeft) ===
                 this.dateTimeAdapter.getYear(dateRight)
         );
     }
 
     /**
-     * Get a valid date object
+     * Возвращает корректный объект даты
      */
     private getValidDate(obj: any): T | null {
         return this.dateTimeAdapter.isDateInstance(obj) &&

@@ -1,16 +1,10 @@
 /**
  * date-time.class
  */
-import {EventEmitter, Inject, Input, Optional, Directive} from '@angular/core';
-import {
-    coerceBooleanProperty,
-    coerceNumberProperty
-} from '@angular/cdk/coercion';
-import {DateTimeAdapter} from './adapter/date-time-adapter.class';
-import {
-    OWL_DATE_TIME_FORMATS,
-    OwlDateTimeFormats
-} from './adapter/date-time-format.class';
+import { Directive, EventEmitter, Inject, Input, Optional } from '@angular/core';
+import { coerceBooleanProperty, coerceNumberProperty } from '@angular/cdk/coercion';
+import { DateTimeAdapter } from './adapter/date-time-adapter.class';
+import { OWL_DATE_TIME_FORMATS, OwlDateTimeFormats } from './adapter/date-time-format.class';
 
 let nextUniqueId = 0;
 
@@ -31,9 +25,10 @@ export type DateViewType = DateView.MONTH | DateView.YEAR | DateView.MULTI_YEARS
 @Directive()
 export abstract class OwlDateTime<T> {
     /**
-     * Whether to show the second's timer
+     * Начальное представление календаря
      */
-    private _showSecondsTimer = false;
+    @Input()
+    startView: DateViewType = DateView.MONTH;
     @Input()
     get showSecondsTimer(): boolean {
         return this._showSecondsTimer;
@@ -42,11 +37,11 @@ export abstract class OwlDateTime<T> {
     set showSecondsTimer(val: boolean) {
         this._showSecondsTimer = coerceBooleanProperty(val);
     }
-
     /**
-     * Whether the timer is in hour12 format
-     */
-    private _hour12Timer = false;
+     * Нужно ли показывать номера недель в календаре
+     * */
+    @Input()
+    showCalendarWeeks = false;
     @Input()
     get hour12Timer(): boolean {
         return this._hour12Timer;
@@ -55,33 +50,26 @@ export abstract class OwlDateTime<T> {
     set hour12Timer(val: boolean) {
         this._hour12Timer = coerceBooleanProperty(val);
     }
-
     /**
-     * The view that the calendar should start in.
-     */
-    @Input()
-    startView: DateViewType = DateView.MONTH;
-
-    /**
-     * Whether to show calendar weeks in the calendar
-     * */
-    @Input()
-    showCalendarWeeks = false;
-
-    /**
-     * Whether to should only the year and multi-year views.
+     * Нужно ли показывать только представления года и нескольких лет
      */
     @Input()
     yearOnly = false;
-
     /**
-     * Whether to should only the multi-year view.
+     * Нужно ли показывать только представление нескольких лет
      */
     @Input()
     multiyearOnly = false;
-
     /**
-     * Hours to change per step
+     * Нужно ли показывать поле секунд
+     */
+    private _showSecondsTimer = false;
+    /**
+     * Используется ли 12-часовой формат времени
+     */
+    private _hour12Timer = false;
+    /**
+     * Количество часов за один шаг
      */
     private _stepHour = 1;
     @Input()
@@ -94,7 +82,7 @@ export abstract class OwlDateTime<T> {
     }
 
     /**
-     * Minutes to change per step
+     * Количество минут за один шаг
      */
     private _stepMinute = 1;
     @Input()
@@ -107,7 +95,7 @@ export abstract class OwlDateTime<T> {
     }
 
     /**
-     * Seconds to change per step
+     * Количество секунд за один шаг
      */
     private _stepSecond = 1;
     @Input()
@@ -120,7 +108,7 @@ export abstract class OwlDateTime<T> {
     }
 
     /**
-     * Set the first day of week
+     * Задаёт первый день недели
      */
     private _firstDayOfWeek: number;
     @Input()
@@ -138,7 +126,7 @@ export abstract class OwlDateTime<T> {
     }
 
     /**
-     * Whether to hide dates in other months at the start or end of the current month.
+     * Нужно ли скрывать даты соседних месяцев в начале или конце текущего месяца
      */
     private _hideOtherMonths = false;
     @Input()
@@ -204,16 +192,17 @@ export abstract class OwlDateTime<T> {
     }
 
     /**
-     * Date Time Checker to check if the give dateTime is selectable
+     * Проверка доступности указанных даты и времени для выбора
      */
     public dateTimeChecker = (dateTime: T) => {
         return (
-            !!dateTime &&
+            dateTime != null &&
+            this.dateTimeAdapter.isValid(dateTime) &&
             (!this.dateTimeFilter || this.dateTimeFilter(dateTime)) &&
-            (!this.minDateTime ||
+            (this.minDateTime == null ||
                 this.dateTimeAdapter.compare(dateTime, this.minDateTime) >=
                 0) &&
-            (!this.maxDateTime ||
+            (this.maxDateTime == null ||
                 this.dateTimeAdapter.compare(dateTime, this.maxDateTime) <= 0)
         );
     };

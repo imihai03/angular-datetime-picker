@@ -1,6 +1,6 @@
-# Default Angular browser support
-# See: https://angular.dev/tools/cli/build#configuring-browser-compatibility
-# And: https://angular.dev/reference/versions#browser-support
+# Браузеры, поддерживаемые Angular по умолчанию
+# Документация: https://angular.dev/tools/cli/build#configuring-browser-compatibility
+# Также: https://angular.dev/reference/versions#browser-support
 last 2 Chrome versions
 last 1 Firefox version
 last 2 Edge major versions

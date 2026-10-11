@@ -4,11 +4,11 @@
 
 
 /**
- * Extends an object with the *enumerable* and *own* properties of one or more source objects,
- * similar to Object.assign.
+ * Дополняет объект собственными перечисляемыми свойствами одного или нескольких исходных объектов,
+ * аналогично Object.assign
  *
- * @param dest The object which will have properties copied to it.
- * @param sources The source objects from which properties will be copied.
+ * @param dest Объект, в который копируются свойства
+ * @param sources Исходные объекты, из которых копируются свойства
  */
 export function extendObject(dest: any, ...sources: any[]): any {
     if (dest == null) {
@@ -18,7 +18,7 @@ export function extendObject(dest: any, ...sources: any[]): any {
     for (const source of sources) {
         if (source != null) {
             for (const key in source) {
-                if (source.hasOwnProperty(key)) {
+                if (Object.prototype.hasOwnProperty.call(source, key)) {
                     dest[key] = source[key];
                 }
             }

@@ -5,7 +5,7 @@ import { ESCAPE } from '@angular/cdk/keycodes';
 import { GlobalPositionStrategy, OverlayRef } from '@angular/cdk/overlay';
 import { Location } from '@angular/common';
 import { Signal, signal } from '@angular/core';
-import { Observable, Subject, Subscription, SubscriptionLike, filter, take } from 'rxjs';
+import { filter, Observable, Subject, Subscription, SubscriptionLike, take } from 'rxjs';
 import { IDateTimePickerAnimationEvent } from '../date-time/date-time-picker-animation-event';
 import { DialogPosition } from './dialog-config.class';
 import { OwlDialogContainerComponent } from './dialog-container.component';
@@ -13,6 +13,10 @@ import { OwlDialogContainerComponent } from './dialog-container.component';
 export class OwlDialogRef<T> {
 
     private result: any;
+    /**
+     * Экземпляр компонента, открытого в диалоговом окне
+     * */
+    public componentInstance = signal<T | undefined>(undefined);
 
     private _beforeClose$ = new Subject<any>();
 
@@ -21,17 +25,11 @@ export class OwlDialogRef<T> {
     private _afterOpen$ = new Subject<any>();
 
     private _afterClosed$ = new Subject<any>();
-
-    /** Subscription to changes in the user's location. */
-    private locationChanged: SubscriptionLike = Subscription.EMPTY;
-
-    /**
-     * The instance of component opened into modal
-     * */
-    public componentInstance = signal<T | undefined>(undefined);
-
-    /** Whether the user is allowed to close the dialog. */
+    /** Разрешено ли пользователю закрывать диалоговое окно */
     public disableClose = true;
+    private closing = false;
+    /** Подписка на изменения адреса в браузере */
+    private locationChanged: SubscriptionLike = Subscription.EMPTY;
 
     constructor(private overlayRef: OverlayRef,
         private container: OwlDialogContainerComponent,
@@ -69,6 +67,9 @@ export class OwlDialogRef<T> {
                 this.locationChanged.unsubscribe();
                 this._afterClosed$.next(this.result);
                 this._afterClosed$.complete();
+                this._beforeOpen$.complete();
+                this._afterOpen$.complete();
+                this._beforeClose$.complete();
                 this.componentInstance.set(undefined);
             });
 
@@ -86,11 +87,15 @@ export class OwlDialogRef<T> {
     }
 
     public close(dialogResult?: any) {
+        if (this.closing) {
+            return;
+        }
+        this.closing = true;
         this.result = dialogResult;
 
         this.container.animationStateChanged
             .pipe(
-                filter(event => event.phaseName === 'start'),
+                filter(event => event.phaseName === 'start' && event.toState === 'leave'),
                 take(1)
             )
             .subscribe(() => {
@@ -103,22 +108,22 @@ export class OwlDialogRef<T> {
     }
 
     /**
-     * Gets an observable that emits when the overlay's backdrop has been clicked.
+     * Возвращает Observable нажатий на фон overlay
      */
     public backdropClick(): Observable<any> {
         return this.overlayRef.backdropClick();
     }
 
     /**
-     * Gets an observable that emits when keydown events are targeted on the overlay.
+     * Возвращает Observable событий keydown, направленных на overlay
      */
     public keydownEvents(): Observable<KeyboardEvent> {
         return this.overlayRef.keydownEvents();
     }
 
     /**
-     * Updates the dialog's position.
-     * @param position New dialog position.
+     * Обновляет положение диалогового окна
+     * @param position Новое положение диалогового окна
      */
     public updatePosition(position?: DialogPosition): this {
         const strategy = this.getPositionStrategy();
@@ -141,9 +146,9 @@ export class OwlDialogRef<T> {
     }
 
     /**
-     * Updates the dialog's width and height.
-     * @param width New width of the dialog.
-     * @param height New height of the dialog.
+     * Обновляет ширину и высоту диалогового окна
+     * @param width Новая ширина диалогового окна
+     * @param height Новая высота диалогового окна
      */
     updateSize(width: string = 'auto', height: string = 'auto'): this {
         this.getPositionStrategy().width(width).height(height);
@@ -171,7 +176,7 @@ export class OwlDialogRef<T> {
         return this._afterClosed$.asObservable();
     }
 
-    /** Fetches the position strategy object from the overlay ref. */
+    /** Возвращает стратегию позиционирования из ссылки на overlay */
     private getPositionStrategy(): GlobalPositionStrategy {
         return this.overlayRef.getConfig().positionStrategy as GlobalPositionStrategy;
     }

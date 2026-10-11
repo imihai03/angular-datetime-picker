@@ -2,42 +2,13 @@
  * calendar-month-view.component
  */
 
-import {
-    AfterContentInit,
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Inject,
-    Input,
-    OnDestroy,
-    OnInit,
-    Optional,
-    Output,
-    ViewChild
-} from '@angular/core';
-import {
-    CalendarCell,
-    OwlCalendarBodyComponent
-} from './calendar-body.component';
+import { AfterContentInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Optional, Output, ViewChild } from '@angular/core';
+import { CalendarCell, OwlCalendarBodyComponent } from './calendar-body.component';
 import { DateTimeAdapter } from './adapter/date-time-adapter.class';
-import {
-    OWL_DATE_TIME_FORMATS,
-    OwlDateTimeFormats
-} from './adapter/date-time-format.class';
+import { OWL_DATE_TIME_FORMATS, OwlDateTimeFormats } from './adapter/date-time-format.class';
 import { Subscription } from 'rxjs';
 import { SelectMode } from './date-time.class';
-import {
-    DOWN_ARROW,
-    END,
-    ENTER,
-    HOME,
-    LEFT_ARROW,
-    PAGE_DOWN,
-    PAGE_UP,
-    RIGHT_ARROW,
-    UP_ARROW
-} from '@angular/cdk/keycodes';
+import { DOWN_ARROW, END, ENTER, HOME, LEFT_ARROW, PAGE_DOWN, PAGE_UP, RIGHT_ARROW, UP_ARROW } from '@angular/cdk/keycodes';
 import { getLocaleFirstDayOfWeek } from '@angular/common';
 
 const DAYS_PER_WEEK = 7;
@@ -58,24 +29,22 @@ const WEEKS_PER_VIEW = 6;
 export class OwlMonthViewComponent<T>
     implements OnInit, AfterContentInit, OnDestroy {
     /**
-     * Whether to hide dates in other months at the start or end of the current month.
+     * Нужно ли скрывать даты соседних месяцев в начале или конце текущего месяца
      * */
     @Input()
     hideOtherMonths = false;
 
     /**
-     * Whether to show calendar weeks in the calendar
+     * Нужно ли показывать номера недель в календаре
      * */
     @Input()
     showCalendarWeeks = false;
 
     private isDefaultFirstDayOfWeek = true;
-
     /**
-     * Define the first day of a week
-     * Sunday: 0 - Saturday: 6
+     * Число месяца, соответствующее сегодняшней дате
      * */
-    private _firstDayOfWeek: number;
+    public todayDate: number | null;
 
     @Input()
     get firstDayOfWeek(): number {
@@ -94,11 +63,10 @@ export class OwlMonthViewComponent<T>
             }
         }
     }
-
     /**
-     * The select mode of the picker;
+     * Номера дней недели
      * */
-    private _selectMode: SelectMode = 'single';
+    public weekNumbers: number[];
     @Input()
     get selectMode(): SelectMode {
         return this._selectMode;
@@ -111,9 +79,11 @@ export class OwlMonthViewComponent<T>
             this.cdRef.markForCheck();
         }
     }
-
-    /** The currently selected date. */
-    private _selected: T | null;
+    /**
+     * Массив значений selectedDates
+     * Значение — номер дня в текущем месяце
+     * */
+    public selectedDates: number[] = [];
     @Input()
     get selected(): T | null {
         return this._selected;
@@ -134,45 +104,24 @@ export class OwlMonthViewComponent<T>
     get selecteds(): T[] {
         return this._selecteds;
     }
-
-    set selecteds(values: T[]) {
-        this._selecteds = values.map(v => {
-            v = this.dateTimeAdapter.deserialize(v);
-            return this.getValidDate(v);
-        });
-        this.setSelectedDates();
-    }
+    // Индекс ячейки с первым днём месяца
+    public firstRowOffset: number;
 
     private _pickerDateTime: T;
     @Input()
     get pickerDateTime() {
         return this._pickerDateTime;
     }
-
-    set pickerDateTime(value: T) {
-        const oldDateTime = this._pickerDateTime;
-        value = this.dateTimeAdapter.deserialize(value);
-        this._pickerDateTime =
-            this.getValidDate(value) || this.dateTimeAdapter.now();
-
-        this.firstDateOfMonth = this.dateTimeAdapter.createDate(
-            this.dateTimeAdapter.getYear(this._pickerDateTime),
-            this.dateTimeAdapter.getMonth(this._pickerDateTime),
-            1
-        );
-
-        if (
-            !this.isSameMonth(oldDateTime, this._pickerDateTime) &&
-            this.initiated
-        ) {
-            this.generateCalendar();
-        }
-    }
-
     /**
-     * A function used to filter which dates are selectable
+     * Обработчик выбора новой даты
      * */
-    private _dateFilter: (date: T) => boolean;
+    @Output()
+    readonly selectedChange = new EventEmitter<T | null>();
+    /**
+     * Обработчик выбора любой даты
+     * */
+    @Output()
+    readonly userSelection = new EventEmitter<void>();
     @Input()
     get dateFilter() {
         return this._dateFilter;
@@ -185,9 +134,9 @@ export class OwlMonthViewComponent<T>
             this.cdRef.markForCheck();
         }
     }
-
-    /** The minimum selectable date. */
-    private _minDate: T | null;
+    /** Событие активации любой даты */
+    @Output()
+    readonly pickerDateTimeChange: EventEmitter<T> = new EventEmitter<T>();
     @Input()
     get minDate(): T | null {
         return this._minDate;
@@ -201,9 +150,9 @@ export class OwlMonthViewComponent<T>
             this.cdRef.markForCheck();
         }
     }
-
-    /** The maximum selectable date. */
-    private _maxDate: T | null;
+    /** Тело таблицы календаря */
+    @ViewChild(OwlCalendarBodyComponent, { static: true })
+    calendarBodyElm: OwlCalendarBodyComponent;
     @Input()
     get maxDate(): T | null {
         return this._maxDate;
@@ -228,16 +177,11 @@ export class OwlMonthViewComponent<T>
     get days() {
         return this._days;
     }
-
-    get activeCell(): number {
-        if (this.pickerDateTime) {
-            return (
-                this.dateTimeAdapter.getDate(this.pickerDateTime) +
-                this.firstRowOffset -
-                1
-            );
-        }
-    }
+    /**
+     * Задаёт первый день недели
+     * Воскресенье: 0 — суббота: 6
+     * */
+    private _firstDayOfWeek: number;
 
     get isInSingleMode(): boolean {
         return this.selectMode === 'single';
@@ -258,45 +202,58 @@ export class OwlMonthViewComponent<T>
     private initiated = false;
 
     private dateNames: string[];
-
     /**
-     * The date of the month that today falls on.
+     * Режим выбора даты
      * */
-    public todayDate: number | null;
-
+    private _selectMode: SelectMode = 'single';
+    /** Текущая выбранная дата */
+    private _selected: T | null;
     /**
-     * Week day numbers
+     * Функция, определяющая доступные для выбора даты
      * */
-    public weekNumbers: number[];
+    private _dateFilter: (date: T) => boolean;
+    /** Минимальная доступная для выбора дата */
+    private _minDate: T | null;
+    /** Максимальная доступная для выбора дата */
+    private _maxDate: T | null;
 
-    /**
-     * An array to hold all selectedDates' value
-     * the value is the day number in current month
-     * */
-    public selectedDates: number[] = [];
+    set selecteds(values: T[]) {
+        this._selecteds = (values ?? []).map(v => {
+            v = this.dateTimeAdapter.deserialize(v);
+            return this.getValidDate(v);
+        });
+        this.setSelectedDates();
+    }
 
-    // the index of cell that contains the first date of the month
-    public firstRowOffset: number;
+    set pickerDateTime(value: T) {
+        const oldDateTime = this._pickerDateTime;
+        value = this.dateTimeAdapter.deserialize(value);
+        this._pickerDateTime =
+            this.getValidDate(value) ?? this.dateTimeAdapter.now();
 
-    /**
-     * Callback to invoke when a new date is selected
-     * */
-    @Output()
-    readonly selectedChange = new EventEmitter<T | null>();
+        this.firstDateOfMonth = this.dateTimeAdapter.createDate(
+            this.dateTimeAdapter.getYear(this._pickerDateTime),
+            this.dateTimeAdapter.getMonth(this._pickerDateTime),
+            1
+        );
 
-    /**
-     * Callback to invoke when any date is selected.
-     * */
-    @Output()
-    readonly userSelection = new EventEmitter<void>();
+        if (
+            !this.isSameMonth(oldDateTime, this._pickerDateTime) &&
+            this.initiated
+        ) {
+            this.generateCalendar();
+        }
+    }
 
-    /** Emits when any date is activated. */
-    @Output()
-    readonly pickerDateTimeChange: EventEmitter<T> = new EventEmitter<T>();
-
-    /** The body of calendar table */
-    @ViewChild(OwlCalendarBodyComponent, { static: true })
-    calendarBodyElm: OwlCalendarBodyComponent;
+    get activeCell(): number {
+        if (this.pickerDateTime != null) {
+            return (
+                this.dateTimeAdapter.getDate(this.pickerDateTime) +
+                this.firstRowOffset -
+                1
+            );
+        }
+    }
 
     get owlDTCalendarView(): boolean {
         return true;
@@ -334,12 +291,12 @@ export class OwlMonthViewComponent<T>
     }
 
     /**
-     * Handle a calendarCell selected
+     * Обрабатывает выбор ячейки календаря
      */
     public selectCalendarCell(cell: CalendarCell): void {
-        // Cases in which the date would not be selected
-        // 1, the calendar cell is NOT enabled (is NOT valid)
-        // 2, the selected date is NOT in current picker's month and the hideOtherMonths is enabled
+        // Условия, при которых дата не выбирается:
+        // 1) Ячейка календаря недоступна для выбора
+        // 2) Дата находится вне текущего месяца и включён hideOtherMonths
         if (!cell.enabled || (this.hideOtherMonths && cell.out)) {
             return;
         }
@@ -348,26 +305,12 @@ export class OwlMonthViewComponent<T>
     }
 
     /**
-     * Handle a new date selected
-     */
-    private selectDate(date: number): void {
-        const daysDiff = date - 1;
-        const selected = this.dateTimeAdapter.addCalendarDays(
-            this.firstDateOfMonth,
-            daysDiff
-        );
-
-        this.selectedChange.emit(selected);
-        this.userSelection.emit();
-    }
-
-    /**
-     * Handle keydown event on calendar body
+     * Обрабатывает keydown в таблице календаря
      */
     public handleCalendarKeydown(event: KeyboardEvent): void {
         let dateTime;
         switch (event.keyCode) {
-            // minus 1 day
+            // На один день назад
             case LEFT_ARROW:
                 dateTime = this.dateTimeAdapter.addCalendarDays(
                     this.pickerDateTime,
@@ -376,7 +319,7 @@ export class OwlMonthViewComponent<T>
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // add 1 day
+            // На один день вперёд
             case RIGHT_ARROW:
                 dateTime = this.dateTimeAdapter.addCalendarDays(
                     this.pickerDateTime,
@@ -385,7 +328,7 @@ export class OwlMonthViewComponent<T>
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // minus 1 week
+            // На одну неделю назад
             case UP_ARROW:
                 dateTime = this.dateTimeAdapter.addCalendarDays(
                     this.pickerDateTime,
@@ -394,7 +337,7 @@ export class OwlMonthViewComponent<T>
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // add 1 week
+            // На одну неделю вперёд
             case DOWN_ARROW:
                 dateTime = this.dateTimeAdapter.addCalendarDays(
                     this.pickerDateTime,
@@ -403,7 +346,7 @@ export class OwlMonthViewComponent<T>
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // move to first day of current month
+            // К первому дню текущего месяца
             case HOME:
                 dateTime = this.dateTimeAdapter.addCalendarDays(
                     this.pickerDateTime,
@@ -412,7 +355,7 @@ export class OwlMonthViewComponent<T>
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // move to last day of current month
+            // К последнему дню текущего месяца
             case END:
                 dateTime = this.dateTimeAdapter.addCalendarDays(
                     this.pickerDateTime,
@@ -422,7 +365,7 @@ export class OwlMonthViewComponent<T>
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // minus 1 month (or 1 year)
+            // На один месяц (или год) назад
             case PAGE_UP:
                 dateTime = event.altKey
                     ? this.dateTimeAdapter.addCalendarYears(
@@ -436,7 +379,7 @@ export class OwlMonthViewComponent<T>
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // add 1 month (or 1 year)
+            // На один месяц (или год) вперёд
             case PAGE_DOWN:
                 dateTime = event.altKey
                     ? this.dateTimeAdapter.addCalendarYears(
@@ -450,9 +393,12 @@ export class OwlMonthViewComponent<T>
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // Select the active date.
+            // Выбирает активную дату
             case ENTER:
-                if (!this.dateFilter || this.dateFilter(this.pickerDateTime)) {
+                if (this.isDateEnabled(this.dateTimeAdapter.addCalendarDays(
+                    this.firstDateOfMonth,
+                    this.dateTimeAdapter.getDate(this.pickerDateTime) - 1
+                ))) {
                     this.selectDate(
                         this.dateTimeAdapter.getDate(this.pickerDateTime)
                     );
@@ -466,8 +412,49 @@ export class OwlMonthViewComponent<T>
         event.preventDefault();
     }
 
+    public getISOWeek(d: Date): number {
+        const clonedDate = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        // Используем для воскресенья номер дня 7
+        clonedDate.setUTCDate(clonedDate.getUTCDate() + 4 - (clonedDate.getUTCDay()||7));
+        // Получаем первый день года
+        const yearStart = new Date(Date.UTC(clonedDate.getUTCFullYear(),0,1));
+        // Вычисляем число полных недель до ближайшего четверга
+        const weekNo = Math.ceil(( ( (+clonedDate - +yearStart) / 86400000) + 1)/7);
+        return weekNo;
+    }
+
     /**
-     * Generate the calendar weekdays array
+     * Проверяет, что даты не равны null и находятся в одном месяце
+     */
+    public isSameMonth(dateLeft: T, dateRight: T): boolean {
+        return (
+            dateLeft != null &&
+            dateRight != null &&
+            this.dateTimeAdapter.isValid(dateLeft) &&
+            this.dateTimeAdapter.isValid(dateRight) &&
+            this.dateTimeAdapter.getYear(dateLeft) ===
+                this.dateTimeAdapter.getYear(dateRight) &&
+            this.dateTimeAdapter.getMonth(dateLeft) ===
+                this.dateTimeAdapter.getMonth(dateRight)
+        );
+    }
+
+    /**
+     * Обрабатывает выбор новой даты
+     */
+    private selectDate(date: number): void {
+        const daysDiff = date - 1;
+        const selected = this.dateTimeAdapter.addCalendarDays(
+            this.firstDateOfMonth,
+            daysDiff
+        );
+
+        this.selectedChange.emit(selected);
+        this.userSelection.emit();
+    }
+
+    /**
+     * Создаёт массив дней недели для календаря
      * */
     private generateWeekDays(): void {
         const longWeekdays = this.dateTimeAdapter.getDayOfWeekNames('long');
@@ -488,11 +475,21 @@ export class OwlMonthViewComponent<T>
         return;
     }
 
+    private updateFirstDayOfWeek(locale: string): void {
+        if (this.isDefaultFirstDayOfWeek) {
+            try {
+                this._firstDayOfWeek = getLocaleFirstDayOfWeek(locale);
+            } catch {
+                this._firstDayOfWeek = 0;
+            }
+        }
+    }
+
     /**
-     * Generate the calendar days array
+     * Создаёт массив дней календаря
      * */
     private generateCalendar(): void {
-        if (!this.pickerDateTime) {
+        if (this.pickerDateTime == null) {
             return;
         }
 
@@ -552,32 +549,11 @@ export class OwlMonthViewComponent<T>
         this.setSelectedDates();
     }
 
-    public getISOWeek(d: Date): number {
-        const clonedDate = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        // Make Sunday's day number 7
-        clonedDate.setUTCDate(clonedDate.getUTCDate() + 4 - (clonedDate.getUTCDay()||7));
-        // Get first day of year
-        const yearStart = new Date(Date.UTC(clonedDate.getUTCFullYear(),0,1));
-        // Calculate full weeks to nearest Thursday
-        const weekNo = Math.ceil(( ( (+clonedDate - +yearStart) / 86400000) + 1)/7);
-        return weekNo;
-    }
-
-    private updateFirstDayOfWeek(locale: string): void {
-        if (this.isDefaultFirstDayOfWeek) {
-            try {
-                this._firstDayOfWeek = getLocaleFirstDayOfWeek(locale);
-            } catch {
-                this._firstDayOfWeek = 0;
-            }
-        }
-    }
-
     /**
-     * Creates CalendarCell for days.
+     * Создаёт CalendarCell для дней
      */
     private createDateCell(date: T, daysDiff: number): CalendarCell {
-        // total days of the month
+        // Количество дней в месяце
         const daysInMonth = this.dateTimeAdapter.getNumDaysInMonth(
             this.pickerDateTime
         );
@@ -589,10 +565,10 @@ export class OwlMonthViewComponent<T>
             this.dateTimeFormats.dateA11yLabel
         );
 
-        // check if the date if selectable
+        // Проверяем доступность даты для выбора
         const enabled = this.isDateEnabled(date);
 
-        // check if date is not in current month
+        // Проверяем, находится ли дата вне текущего месяца
         const dayValue = daysDiff + 1;
         const out = dayValue < 1 || dayValue > daysInMonth;
         const cellClass = 'owl-dt-day-' + this.dateTimeAdapter.getDay(date);
@@ -608,43 +584,27 @@ export class OwlMonthViewComponent<T>
     }
 
     /**
-     * Check if the date is valid
+     * Проверяет допустимость даты
      */
     private isDateEnabled(date: T): boolean {
         return (
-            !!date &&
+            date != null &&
             (!this.dateFilter || this.dateFilter(date)) &&
-            (!this.minDate ||
+            (this.minDate == null ||
                 this.dateTimeAdapter.compare(date, this.minDate) >= 0) &&
-            (!this.maxDate ||
+            (this.maxDate == null ||
                 this.dateTimeAdapter.compare(date, this.maxDate) <= 0)
         );
     }
 
     /**
-     * Get a valid date object
+     * Возвращает корректный объект даты
      */
     private getValidDate(obj: any): T | null {
         return this.dateTimeAdapter.isDateInstance(obj) &&
             this.dateTimeAdapter.isValid(obj)
             ? obj
             : null;
-    }
-
-    /**
-     * Check if the give dates are none-null and in the same month
-     */
-    public isSameMonth(dateLeft: T, dateRight: T): boolean {
-        return (
-            dateLeft &&
-            dateRight &&
-            this.dateTimeAdapter.isValid(dateLeft) &&
-            this.dateTimeAdapter.isValid(dateRight) &&
-            this.dateTimeAdapter.getYear(dateLeft) ===
-                this.dateTimeAdapter.getYear(dateRight) &&
-            this.dateTimeAdapter.getMonth(dateLeft) ===
-                this.dateTimeAdapter.getMonth(dateRight)
-        );
     }
 
     private getISOWeekFromDate(date: T): number {
@@ -664,18 +624,18 @@ export class OwlMonthViewComponent<T>
     }
 
     /**
-     * Set the selectedDates value.
-     * In single mode, it has only one value which represent the selected date
-     * In range mode, it would has two values, one for the fromValue and the other for the toValue
+     * Задаёт значение selectedDates
+     * В режиме single содержит одно значение — выбранную дату
+     * В режиме range содержит два значения: fromValue и toValue
      * */
     private setSelectedDates(): void {
         this.selectedDates = [];
 
-        if (!this.firstDateOfMonth) {
+        if (this.firstDateOfMonth == null) {
             return;
         }
 
-        if (this.isInSingleMode && this.selected) {
+        if (this.isInSingleMode && this.selected != null) {
             const dayDiff = this.dateTimeAdapter.differenceInCalendarDays(
                 this.selected,
                 this.firstDateOfMonth

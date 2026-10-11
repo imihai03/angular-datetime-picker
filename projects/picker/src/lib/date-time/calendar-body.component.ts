@@ -2,18 +2,8 @@
  * calendar-body.component
  */
 
-import {
-    ChangeDetectionStrategy,
-    Component,
-    ElementRef,
-    EventEmitter,
-    Input,
-    NgZone,
-    OnInit,
-    Output
-} from '@angular/core';
+import { afterNextRender, AfterRenderRef, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, EventEmitter, inject, Injector, Input, NgZone, OnInit, Output } from '@angular/core';
 import { SelectMode } from './date-time.class';
-import { take } from 'rxjs/operators';
 
 export class CalendarCell {
     constructor(
@@ -40,52 +30,48 @@ export class CalendarCell {
 })
 export class OwlCalendarBodyComponent implements OnInit {
     /**
-     * The cell number of the active cell in the table.
+     * Номер активной ячейки в таблице
      */
     @Input()
     activeCell = 0;
-
     /**
-     * The cells to display in the table.
+     * Ячейки, отображаемые в таблице
      * */
     @Input()
     rows: CalendarCell[][];
-
     /**
-     * The number of columns in the table.
+     * Количество столбцов в таблице
      * */
     @Input()
     numCols = 7;
-
     /**
-     * The ratio (width / height) to use for the cells in the table.
+     * Соотношение ширины и высоты ячеек таблицы
      */
     @Input()
     cellRatio = 1;
-
     /**
-     * The value in the table that corresponds to today.
+     * Значение в таблице, соответствующее сегодняшней дате
      * */
     @Input()
     todayValue: number;
-
     /**
-     * The value in the table that is currently selected.
+     * Выбранное значение в таблице
      * */
     @Input()
-    selectedValues: number[];
-
+    selectedValues: number[] = [];
     /**
-     * Current picker select mode
+     * Текущий режим выбора даты
      */
     @Input()
     selectMode: SelectMode;
-
     /**
-     * Emit when a calendar cell is selected
+     * Событие выбора ячейки календаря
      * */
     @Output()
     public readonly select = new EventEmitter<CalendarCell>();
+    private readonly injector = inject(Injector);
+    private readonly destroyRef = inject(DestroyRef);
+    private focusRef: AfterRenderRef | undefined;
 
     get owlDTCalendarBodyClass(): boolean {
         return true;
@@ -103,12 +89,15 @@ export class OwlCalendarBodyComponent implements OnInit {
         );
     }
 
-    constructor(private elmRef: ElementRef, private ngZone: NgZone) {}
+    constructor(private elmRef: ElementRef<HTMLElement>, private ngZone: NgZone) {
+    }
 
     public ngOnInit() {}
 
     public selectCell(cell: CalendarCell): void {
-        this.select.emit(cell);
+        if (cell.enabled) {
+            this.select.emit(cell);
+        }
     }
 
     public isActiveCell(rowIndex: number, colIndex: number): boolean {
@@ -117,7 +106,7 @@ export class OwlCalendarBodyComponent implements OnInit {
     }
 
     /**
-     * Check if the cell is selected
+     * Проверяет, выбрана ли ячейка
      */
     public isSelected(value: number): boolean {
         if (!this.selectedValues || this.selectedValues.length === 0) {
@@ -129,22 +118,22 @@ export class OwlCalendarBodyComponent implements OnInit {
         }
 
         if (this.isInRangeMode) {
-            const fromValue = this.selectedValues[0];
-            const toValue = this.selectedValues[1];
+            const fromValue = this.selectedValues?.[0];
+            const toValue = this.selectedValues?.[1];
 
             return value === fromValue || value === toValue;
         }
     }
 
     /**
-     * Check if the cell in the range
+     * Проверяет, входит ли ячейка в диапазон
      * */
     public isInRange(value: number): boolean {
         if (this.isInRangeMode) {
-            const fromValue = this.selectedValues[0];
-            const toValue = this.selectedValues[1];
+            const fromValue = this.selectedValues?.[0];
+            const toValue = this.selectedValues?.[1];
 
-            if (fromValue !== null && toValue !== null) {
+            if (fromValue != null && toValue != null) {
                 return value >= fromValue && value <= toValue;
             } else {
                 return value === fromValue || value === toValue;
@@ -153,38 +142,40 @@ export class OwlCalendarBodyComponent implements OnInit {
     }
 
     /**
-     * Check if the cell is the range from
+     * Проверяет, соответствует ли ячейка началу диапазона
      * */
     public isRangeFrom(value: number): boolean {
         if (this.isInRangeMode) {
-            const fromValue = this.selectedValues[0];
-            return fromValue !== null && value === fromValue;
+            const fromValue = this.selectedValues?.[0];
+            return fromValue != null && value === fromValue;
         }
     }
 
     /**
-     * Check if the cell is the range to
+     * Проверяет, соответствует ли ячейка концу диапазона
      * */
     public isRangeTo(value: number): boolean {
         if (this.isInRangeMode) {
-            const toValue = this.selectedValues[1];
-            return toValue !== null && value === toValue;
+            const toValue = this.selectedValues?.[1];
+            return toValue != null && value === toValue;
         }
     }
 
     /**
-     * Focus to a active cell
+     * Переводит фокус на активную ячейку
      * */
     public focusActiveCell(): void {
-        this.ngZone.runOutsideAngular(() => {
-            this.ngZone.onStable
-                .asObservable()
-                .pipe(take(1))
-                .subscribe(() => {
-                    this.elmRef.nativeElement
-                        .querySelector('.owl-dt-calendar-cell-active')
-                        .focus();
-                });
-        });
+        if (this.destroyRef.destroyed) {
+            return;
+        }
+
+        this.focusRef?.destroy();
+        this.focusRef = afterNextRender({
+            write: () => {
+                this.focusRef = undefined;
+                this.elmRef.nativeElement.querySelector<HTMLElement>('.owl-dt-calendar-cell-active')
+                    ?.focus();
+            }
+        }, { injector: this.injector });
     }
 }

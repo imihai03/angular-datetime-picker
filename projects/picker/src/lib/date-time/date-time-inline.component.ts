@@ -2,31 +2,12 @@
  * date-time-inline.component
  */
 
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component, EventEmitter,
-    forwardRef,
-    Inject,
-    Input,
-    OnInit,
-    Optional,
-    Output,
-    ViewChild
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, Inject, Input, OnInit, Optional, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import {
-    OwlDateTime,
-    PickerMode,
-    PickerType,
-    SelectMode
-} from './date-time.class';
+import { OwlDateTime, PickerMode, PickerType, SelectMode } from './date-time.class';
 import { DateTimeAdapter } from './adapter/date-time-adapter.class';
-import {
-    OWL_DATE_TIME_FORMATS,
-    OwlDateTimeFormats
-} from './adapter/date-time-format.class';
+import { OWL_DATE_TIME_FORMATS, OwlDateTimeFormats } from './adapter/date-time-format.class';
 import { OwlDateTimeContainerComponent } from './date-time-picker-container.component';
 
 export const OWL_DATETIME_VALUE_ACCESSOR: any = {
@@ -40,7 +21,8 @@ export const OWL_DATETIME_VALUE_ACCESSOR: any = {
     templateUrl: './date-time-inline.component.html',
     styleUrls: ['./date-time-inline.component.scss'],
     host: {
-        '[class.owl-dt-inline]': 'owlDTInlineClass'
+        '[class.owl-dt-inline]': 'owlDTInlineClass',
+        '[attr.aria-disabled]': 'disabled || null'
     },
     standalone: false,
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,12 +35,11 @@ export class OwlDateTimeInlineComponent<T> extends OwlDateTime<T>
     container: OwlDateTimeContainerComponent<T>;
 
     /**
-     * Set the type of the dateTime picker
-     *      'both' -- show both calendar and timer
-     *      'calendar' -- show only calendar
-     *      'timer' -- show only timer
-     */
-    private _pickerType: PickerType = 'both';
+     * Передаёт выбранный год в представлении нескольких лет
+     * При этом выбранная дата не изменяется
+     * */
+    @Output()
+    yearSelected = new EventEmitter<T>();
     @Input()
     get pickerType(): PickerType {
         return this._pickerType;
@@ -75,10 +56,12 @@ export class OwlDateTimeInlineComponent<T> extends OwlDateTime<T>
     get disabled(): boolean {
         return !!this._disabled;
     }
-
-    set disabled(value: boolean) {
-        this._disabled = coerceBooleanProperty(value);
-    }
+    /**
+     * Передаёт выбранный месяц в представлении года
+     * При этом выбранная дата не изменяется
+     * */
+    @Output()
+    monthSelected = new EventEmitter<T>();
 
     private _selectMode: SelectMode = 'single';
     @Input()
@@ -98,54 +81,28 @@ export class OwlDateTimeInlineComponent<T> extends OwlDateTime<T>
 
         this._selectMode = mode;
     }
-
-    /** The date to open the calendar to initially. */
-    private _startAt: T | null;
-    @Input()
-    get startAt(): T | null {
-        if (this._startAt) {
-            return this._startAt;
-        }
-
-        if (this.selectMode === 'single') {
-            return this.value || null;
-        } else if (
-            this.selectMode === 'range' ||
-            this.selectMode === 'rangeFrom'
-        ) {
-            return this.values[0] || null;
-        } else if (this.selectMode === 'rangeTo') {
-            return this.values[1] || null;
-        } else {
-            return null;
-        }
-    }
+    /**
+     * Передаёт выбранную дату
+     * */
+    @Output()
+    dateSelected = new EventEmitter<T>();
+    /**
+     * Задаёт тип компонента выбора даты и времени:
+     *      'both' — календарь и выбор времени
+     *      'calendar' — только календарь
+     *      'timer' — только выбор времени
+     */
+    private _pickerType: PickerType = 'both';
 
     set startAt(date: T | null) {
         this._startAt = this.getValidDate(
             this.dateTimeAdapter.deserialize(date)
         );
     }
-
-    /** The date to open for range calendar. */
-    private _endAt: T | null;
-    @Input()
-    get endAt(): T | null {
-        if (this._endAt) {
-            return this._endAt;
-        }
-
-        if (this.selectMode === 'single') {
-            return this.value || null;
-        } else if (
-            this.selectMode === 'range' ||
-            this.selectMode === 'rangeFrom'
-        ) {
-            return this.values[1] || null;
-        } else {
-            return null;
-        }
-    }
+    /** Минимальная допустимая дата */
+    private _min: T | null;
+    /** Максимальная допустимая дата */
+    private _max: T | null;
 
     set endAt(date: T | null) {
         this._endAt = this.getValidDate(
@@ -163,12 +120,14 @@ export class OwlDateTimeInlineComponent<T> extends OwlDateTime<T>
         this._dateTimeFilter = filter;
     }
 
-    /** The minimum valid date. */
-    private _min: T | null;
-
-    get minDateTime(): T | null {
-        return this._min || null;
+    set disabled(value: boolean) {
+        this._disabled = coerceBooleanProperty(value);
+        this.changeDetector.markForCheck();
+        this.container?.refreshView();
     }
+
+    /** Дата, на которой календарь открывается изначально */
+    private _startAt: T | null;
 
     @Input('min')
     set minDateTime(value: T | null) {
@@ -176,12 +135,28 @@ export class OwlDateTimeInlineComponent<T> extends OwlDateTime<T>
         this.changeDetector.markForCheck();
     }
 
-    /** The maximum valid date. */
-    private _max: T | null;
+    @Input()
+    get startAt(): T | null {
+        if (this._startAt != null) {
+            return this._startAt;
+        }
 
-    get maxDateTime(): T | null {
-        return this._max || null;
+        if (this.selectMode === 'single') {
+            return this.value ?? null;
+        } else if (
+            this.selectMode === 'range' ||
+            this.selectMode === 'rangeFrom'
+        ) {
+            return this.values[0] ?? null;
+        } else if (this.selectMode === 'rangeTo') {
+            return this.values[1] ?? null;
+        } else {
+            return null;
+        }
     }
+
+    /** Дата открытия календаря в режиме диапазона */
+    private _endAt: T | null;
 
     @Input('max')
     set maxDateTime(value: T | null) {
@@ -208,12 +183,38 @@ export class OwlDateTimeInlineComponent<T> extends OwlDateTime<T>
         return this._values;
     }
 
+    @Input()
+    get endAt(): T | null {
+        if (this._endAt != null) {
+            return this._endAt;
+        }
+
+        if (this.selectMode === 'single') {
+            return this.value ?? null;
+        } else if (
+            this.selectMode === 'range' ||
+            this.selectMode === 'rangeFrom'
+        ) {
+            return this.values[1] ?? null;
+        } else {
+            return null;
+        }
+    }
+
+    get minDateTime(): T | null {
+        return this._min ?? null;
+    }
+
+    get maxDateTime(): T | null {
+        return this._max ?? null;
+    }
+
     set values(values: (T | null)[]) {
         if (values && values.length > 0) {
             values = values.map(v => {
                 v = this.dateTimeAdapter.deserialize(v);
                 v = this.getValidDate(v);
-                return v ? this.dateTimeAdapter.clone(v) : null;
+                return v != null ? this.dateTimeAdapter.clone(v) : null;
             });
             this._values = [...values];
             this.selecteds = [...values];
@@ -222,26 +223,6 @@ export class OwlDateTimeInlineComponent<T> extends OwlDateTime<T>
             this.selecteds = [];
         }
     }
-
-    /**
-     * Emits selected year in multi-year view
-     * This doesn't imply a change on the selected date.
-     * */
-    @Output()
-    yearSelected = new EventEmitter<T>();
-
-    /**
-     * Emits selected month in year view
-     * This doesn't imply a change on the selected date.
-     * */
-    @Output()
-    monthSelected = new EventEmitter<T>();
-
-    /**
-     * Emits selected date
-     * */
-    @Output()
-    dateSelected = new EventEmitter<T>();
 
     private _selected: T | null;
     get selected() {
@@ -343,21 +324,21 @@ export class OwlDateTimeInlineComponent<T> extends OwlDateTime<T>
     }
 
     /**
-     * Emits the selected year in multi-year view
+     * Передаёт выбранный год в представлении нескольких лет
      * */
     public selectYear(normalizedYear: T): void {
         this.yearSelected.emit(normalizedYear);
     }
 
     /**
-     * Emits selected month in year view
+     * Передаёт выбранный месяц в представлении года
      * */
     public selectMonth(normalizedMonth: T): void {
         this.monthSelected.emit(normalizedMonth);
     }
 
     /**
-     * Emits the selected date
+     * Передаёт выбранную дату
      * */
      public selectDate(normalizedDate: T): void {
         this.dateSelected.emit(normalizedDate);

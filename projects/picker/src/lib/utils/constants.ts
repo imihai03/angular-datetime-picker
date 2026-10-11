@@ -2,12 +2,12 @@
  * constants
  */
 
-import {range} from './array.utils';
+import { range } from './array.utils';
 
-/** Whether the browser supports the Intl API. */
+/** Поддерживает ли браузер Intl API */
 export const SUPPORTS_INTL_API = typeof Intl !== 'undefined';
 
-/** The default month names to use if Intl API is not available. */
+/** Названия месяцев по умолчанию при недоступном Intl API */
 export const DEFAULT_MONTH_NAMES = {
     long: [
         'January',
@@ -40,7 +40,7 @@ export const DEFAULT_MONTH_NAMES = {
     narrow: ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
 };
 
-/** The default day of the week names to use if Intl API is not available. */
+/** Названия дней недели по умолчанию при недоступном Intl API */
 export const DEFAULT_DAY_OF_WEEK_NAMES = {
     long: [
         'Sunday',
@@ -55,5 +55,5 @@ export const DEFAULT_DAY_OF_WEEK_NAMES = {
     narrow: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 };
 
-/** The default date names to use if Intl API is not available. */
+/** Названия чисел месяца по умолчанию при недоступном Intl API */
 export const DEFAULT_DATE_NAMES = range(31, i => String(i + 1));

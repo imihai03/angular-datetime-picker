@@ -2,14 +2,14 @@ import { DateTime } from 'luxon';
 
 import { LuxonDateTimeAdapter } from './luxon-date-time-adapter.class';
 
-describe('LuxonDateTimeAdapter', () => {
+describe('Адаптер LuxonDateTimeAdapter', () => {
     let adapter: LuxonDateTimeAdapter;
 
     beforeEach(() => {
         adapter = new LuxonDateTimeAdapter('en-US');
     });
 
-    it('keeps a Luxon DateTime valid when it crosses the input boundary', () => {
+    it('сохраняет корректность Luxon DateTime при передаче через поле ввода', () => {
         const value = DateTime.local(2026, 7, 30, 12, 34);
 
         const result = adapter.deserialize(value);
@@ -19,7 +19,7 @@ describe('LuxonDateTimeAdapter', () => {
         expect(result?.toMillis()).toBe(value.toMillis());
     });
 
-    it('normalizes a native Date to a Luxon DateTime', () => {
+    it('преобразует нативный Date в Luxon DateTime', () => {
         const value = new Date(2026, 6, 30, 12, 34);
 
         const result = adapter.deserialize(value);
@@ -29,7 +29,7 @@ describe('LuxonDateTimeAdapter', () => {
         expect(result?.toMillis()).toBe(value.getTime());
     });
 
-    it('parses a value with the configured Luxon format', () => {
+    it('разбирает значение с заданным форматом Luxon', () => {
         const result = adapter.parse('30.07.2026 12:34', 'dd.MM.yyyy HH:mm');
 
         expect(result?.isValid).toBeTrue();
@@ -40,7 +40,7 @@ describe('LuxonDateTimeAdapter', () => {
         expect(result?.minute).toBe(34);
     });
 
-    it('deserializes an ISO value', () => {
+    it('десериализует значение ISO', () => {
         const value = '2026-07-30T12:34:00+03:00';
 
         const result = adapter.deserialize(value);

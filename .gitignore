@@ -1,15 +1,15 @@
-# See http://help.github.com/ignore-files/ for more about ignoring files.
+# Подробнее об исключении файлов: http://help.github.com/ignore-files/
 
-# compiled output
+# Результаты сборки
 /dist
 /tmp
 /out-tsc
 
-# dependencies
+# Зависимости
 /node_modules
 /projects/picker/node_modules
 
-# IDEs and editors
+# IDE и редакторы
 /.idea
 .project
 .classpath
@@ -18,14 +18,14 @@
 .settings/
 *.sublime-workspace
 
-# IDE - VSCode
+# IDE — VSCode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# misc
+# Прочее
 /.sass-cache
 /connect.lock
 /coverage
@@ -35,7 +35,7 @@ yarn-error.log
 testem.log
 /typings
 
-# System Files
+# Системные файлы
 .DS_Store
 Thumbs.db
 /.vscode
@@ -43,3 +43,7 @@ Thumbs.db
 .angular
 .cache
 coverage
+
+# Артефакты тестов Playwright
+/playwright-report/
+/test-results/

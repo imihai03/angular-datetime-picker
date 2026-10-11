@@ -3,19 +3,9 @@
  */
 
 import { DateTime } from 'luxon';
-import {
-    ComponentFixture,
-    inject,
-    TestBed
-} from '@angular/core/testing';
-import { Component, NgZone } from '@angular/core';
-import {
-    createTestDateTime,
-    MockNgZone,
-    dispatchFakeEvent,
-    dispatchMouseEvent,
-    dispatchKeyboardEvent
-} from '../../test-helpers';
+import { ComponentFixture, inject, TestBed } from '@angular/core/testing';
+import { ChangeDetectionStrategy, Component, provideZoneChangeDetection } from '@angular/core';
+import { createTestDateTime, dispatchFakeEvent, dispatchKeyboardEvent, dispatchMouseEvent } from '../../test-helpers';
 import { OwlLuxonDateTimeModule } from './adapter/luxon-date-time.module';
 import { OwlDateTimeModule } from './date-time.module';
 import { OwlCalendarComponent } from './calendar.component';
@@ -25,7 +15,7 @@ import { ENTER, RIGHT_ARROW } from '@angular/cdk/keycodes';
 import { OwlMonthViewComponent } from './calendar-month-view.component';
 import { OwlYearViewComponent } from './calendar-year-view.component';
 import { OwlMultiYearViewComponent } from './calendar-multi-year-view.component';
-import {DateView} from './date-time.class';
+import { DateView } from './date-time.class';
 
 export const JAN = 0,
     FEB = 1,
@@ -40,9 +30,7 @@ export const JAN = 0,
     NOV = 10,
     DEC = 11;
 
-describe('OwlCalendarComponent', () => {
-    let zone: MockNgZone;
-
+describe('Компонент OwlCalendarComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [OwlLuxonDateTimeModule, OwlDateTimeModule],
@@ -54,12 +42,12 @@ describe('OwlCalendarComponent', () => {
             ],
             providers: [
                 OwlDateTimeIntl,
-                { provide: NgZone, useFactory: () => (zone = new MockNgZone()) }
+                provideZoneChangeDetection()
             ]
         }).compileComponents();
     });
 
-    describe('standard calendar', () => {
+    describe('Стандартный календарь', () => {
         let fixture: ComponentFixture<StandardCalendarComponent>;
         let testComponent: StandardCalendarComponent;
         let calendarElement: HTMLElement;
@@ -82,16 +70,16 @@ describe('OwlCalendarComponent', () => {
             testComponent = fixture.componentInstance;
         });
 
-        it('should be in month view with specified month active', () => {
+        it('открывает представление месяца с заданным активным месяцем', () => {
             expect(calendarInstance.currentView).toBe(DateView.MONTH);
             expect(calendarInstance.pickerDateTime).toEqual(
                 createTestDateTime(2018, JAN, 31)
             );
         });
 
-        it('should select date in month view', () => {
+        it('выбирает дату в представлении месяца', () => {
             const monthCell = calendarElement.querySelector(
-                '[aria-label="January 31, 2018"]'
+                '[aria-label="31.01.2018"]'
             );
             (monthCell as HTMLElement).click();
 
@@ -100,7 +88,7 @@ describe('OwlCalendarComponent', () => {
             expect(testComponent.selected).toEqual(createTestDateTime(2018, JAN, 31));
         });
 
-        it('should emit the selected month on cell clicked in year view', () => {
+        it('отправляет выбранный месяц при нажатии на ячейку в представлении года', () => {
             periodButton.click();
             fixture.detectChanges();
 
@@ -126,7 +114,7 @@ describe('OwlCalendarComponent', () => {
             expect(normalizedMonth.month - 1).toEqual(0);
         });
 
-        it('should emit the selected year on cell clicked in multi-years view', () => {
+        it('отправляет выбранный год при нажатии на ячейку в представлении нескольких лет', () => {
             periodButton.click();
             fixture.detectChanges();
 
@@ -144,7 +132,8 @@ describe('OwlCalendarComponent', () => {
             expect(normalizedYear.year).toEqual(2018);
         });
 
-        it('should re-render when the i18n labels have changed', () => {
+        it(
+            'обновляет представление при изменении локализованных подписей',
             inject([OwlDateTimeIntl], (intl: OwlDateTimeIntl) => {
                 const button = fixture.debugElement.nativeElement.querySelector(
                     '.owl-dt-control-period-button'
@@ -157,18 +146,18 @@ describe('OwlCalendarComponent', () => {
                 expect(button.getAttribute('aria-label')).toBe(
                     'Go to multi-year view?'
                 );
-            });
-        });
+            })
+        );
 
-        it('should set all buttons to be `type="button"`', () => {
+        it('устанавливает type="button" для всех кнопок', () => {
             const invalidButtons = calendarElement.querySelectorAll(
                 'button:not([type="button"])'
             );
             expect(invalidButtons.length).toBe(0);
         });
 
-        describe('a11y', () => {
-            describe('calendar body', () => {
+        describe('Доступность', () => {
+            describe('Тело календаря', () => {
                 let calendarMainEl: HTMLElement;
 
                 beforeEach(() => {
@@ -181,17 +170,17 @@ describe('OwlCalendarComponent', () => {
                     fixture.detectChanges();
                 });
 
-                it('should initially set pickerDateTime', () => {
+                it('устанавливает pickerDateTime при инициализации', () => {
                     expect(calendarInstance.pickerDateTime).toEqual(
                         createTestDateTime(2018, JAN, 31)
                     );
                 });
 
-                it('should make the calendar main focusable', () => {
+                it('позволяет сфокусировать основную область календаря', () => {
                     expect(calendarMainEl.getAttribute('tabindex')).toBe('-1');
                 });
 
-                it('should not move focus to the active cell on init', () => {
+                it('не переносит фокус на активную ячейку при инициализации', () => {
                     const activeCell = calendarMainEl.querySelector(
                         '.owl-dt-calendar-cell-active'
                     ) as HTMLElement;
@@ -202,23 +191,21 @@ describe('OwlCalendarComponent', () => {
                     expect(activeCell.focus).not.toHaveBeenCalled();
                 });
 
-                it('should move focus to the active cell when the view changes', () => {
-                    const activeCell = calendarMainEl.querySelector(
-                        '.owl-dt-calendar-cell-active'
-                    ) as HTMLElement;
-
-                    spyOn(activeCell, 'focus').and.callThrough();
+                it('переносит фокус на новую активную ячейку после смены представления', async () => {
+                    const oldCell = calendarMainEl.querySelector('.owl-dt-calendar-cell-active');
+                    periodButton.click();
                     fixture.detectChanges();
+                    await fixture.whenStable();
 
-                    expect(activeCell.focus).not.toHaveBeenCalled();
-
-                    calendarInstance.currentView = DateView.MULTI_YEARS;
-                    fixture.detectChanges();
-
-                    expect(activeCell.focus).toHaveBeenCalled();
+                    const activeCell = calendarMainEl.querySelector('.owl-dt-calendar-cell-active');
+                    expect(activeCell)
+                        .not
+                        .toBe(oldCell);
+                    expect(document.activeElement)
+                        .toBe(activeCell);
                 });
 
-                describe('year view', () => {
+                describe('Представление года', () => {
                     beforeEach(() => {
                         dispatchMouseEvent(periodButton, 'click');
                         fixture.detectChanges();
@@ -235,7 +222,7 @@ describe('OwlCalendarComponent', () => {
                         expect(calendarInstance.currentView).toBe(DateView.YEAR);
                     });
 
-                    it('should return to month view on enter', () => {
+                    it('возвращается к представлению месяца по Enter', () => {
                         const tableBodyEl = calendarMainEl.querySelector(
                             '.owl-dt-calendar-body'
                         ) as HTMLElement;
@@ -258,7 +245,7 @@ describe('OwlCalendarComponent', () => {
                     });
                 });
 
-                describe('multi-years view', () => {
+                describe('Представление нескольких лет', () => {
                     beforeEach(() => {
                         dispatchMouseEvent(periodButton, 'click');
                         fixture.detectChanges();
@@ -268,7 +255,7 @@ describe('OwlCalendarComponent', () => {
                         );
                     });
 
-                    it('should return to year view on enter', () => {
+                    it('возвращается к представлению года по Enter', () => {
                         const tableBodyEl = calendarMainEl.querySelector(
                             '.owl-dt-calendar-body'
                         ) as HTMLElement;
@@ -294,7 +281,7 @@ describe('OwlCalendarComponent', () => {
         });
     });
 
-    describe('calendar with Calendar Weeks', () => {
+    describe('Календарь с номерами недель', () => {
         let fixture: ComponentFixture<CalendarWithCalendarWeeks>;
         let testComponent: CalendarWithCalendarWeeks;
         let calendarElement: HTMLElement;
@@ -310,37 +297,37 @@ describe('OwlCalendarComponent', () => {
 
             calendarInstance = calendarDebugElement.componentInstance;
             testComponent = fixture.componentInstance;
-            
+
             fixture.detectChanges();
         });
 
-        it('should show calendar weeks when attribute showCalendarWeeks in true', () => {
-             // Check the initial value is false
+        it('отображает номера недель при showCalendarWeeks равном true', () => {
+            // Проверяем исходное значение false
             expect(calendarInstance.showCalendarWeeks).toBe(false);
             testComponent.showCalendarWeeks = true;
-            fixture.detectChanges(); // Trigger change detection to apply the new value
-            // Now check if the calendarInstance reflects this change
+            fixture.detectChanges(); // Запускаем change detection для применения нового значения
+            // Проверяем, что calendarInstance отражает изменение
             expect(calendarInstance.showCalendarWeeks).toBe(true);
         });
 
-        it('should show calendar weeks classes only when attribute showCalendarWeeks in true', () => {
-             // Check the initial value is false
+        it('добавляет классы номеров недель только при showCalendarWeeks равном true', () => {
+            // Проверяем исходное значение false
             expect(calendarInstance.showCalendarWeeks).toBe(false);
 
-            // Verify classes are not present initially
+            // Проверяем отсутствие классов в исходном состоянии
             let weekNumberElement = fixture.debugElement.nativeElement.querySelector('.week-number');
             let owlCalendarWeeksElement = fixture.debugElement.nativeElement.querySelector('.owl-calendar-weeks');
             expect(weekNumberElement).toBeNull();
             expect(owlCalendarWeeksElement).toBeNull();
 
-            // Set showCalendarWeeks to true
+            // Устанавливаем showCalendarWeeks в true
             testComponent.showCalendarWeeks = true;
-            fixture.detectChanges(); // Trigger change detection to apply the new value
+            fixture.detectChanges(); // Запускаем change detection для применения нового значения
 
-            // Now check if the calendarInstance reflects this change
+            // Проверяем, что calendarInstance отражает изменение
             expect(calendarInstance.showCalendarWeeks).toBe(true);
 
-            // Verify classes are present after the change
+            // Проверяем наличие классов после изменения
             weekNumberElement = fixture.debugElement.nativeElement.querySelector('.week-number');
             owlCalendarWeeksElement = fixture.debugElement.nativeElement.querySelector('.owl-calendar-weeks');
             expect(weekNumberElement).toBeTruthy();
@@ -349,7 +336,7 @@ describe('OwlCalendarComponent', () => {
     });
 
 
-    describe('calendar with min and max', () => {
+    describe('Календарь с границами min и max', () => {
         let fixture: ComponentFixture<CalendarWithMinMaxComponent>;
         let testComponent: CalendarWithMinMaxComponent;
         let calendarElement: HTMLElement;
@@ -368,7 +355,7 @@ describe('OwlCalendarComponent', () => {
             testComponent = fixture.componentInstance;
         });
 
-        it('should re-render the month view when the minDate changes', () => {
+        it('обновляет представление месяца при изменении minDate', () => {
             const monthViewDebugElm = fixture.debugElement.query(
                 By.directive(OwlMonthViewComponent)
             );
@@ -382,7 +369,7 @@ describe('OwlCalendarComponent', () => {
             expect(monthViewComp.generateCalendar).toHaveBeenCalled();
         });
 
-        it('should re-render the month view when the maxDate changes', () => {
+        it('обновляет представление месяца при изменении maxDate', () => {
             const monthViewDebugElm = fixture.debugElement.query(
                 By.directive(OwlMonthViewComponent)
             );
@@ -396,7 +383,7 @@ describe('OwlCalendarComponent', () => {
             expect(monthViewComp.generateCalendar).toHaveBeenCalled();
         });
 
-        it('should re-render the year view when the minDate changes', () => {
+        it('обновляет представление года при изменении minDate', () => {
             fixture.detectChanges();
             const periodButton = calendarElement.querySelector(
                 '.owl-dt-control-period-button'
@@ -422,7 +409,7 @@ describe('OwlCalendarComponent', () => {
             expect(yearViewComp.generateMonthList).toHaveBeenCalled();
         });
 
-        it('should re-render the year view when the maxDate changes', () => {
+        it('обновляет представление года при изменении maxDate', () => {
             fixture.detectChanges();
             const periodButton = calendarElement.querySelector(
                 '.owl-dt-control-period-button'
@@ -448,7 +435,7 @@ describe('OwlCalendarComponent', () => {
             expect(yearViewComp.generateMonthList).toHaveBeenCalled();
         });
 
-        it('should re-render the multi-years view when the minDate changes', () => {
+        it('обновляет представление нескольких лет при изменении minDate', () => {
             fixture.detectChanges();
             const periodButton = calendarElement.querySelector(
                 '.owl-dt-control-period-button'
@@ -469,7 +456,7 @@ describe('OwlCalendarComponent', () => {
             expect(multiYearsViewComp.generateYearList).toHaveBeenCalled();
         });
 
-        it('should re-render the multi-years view when the maxDate changes', () => {
+        it('обновляет представление нескольких лет при изменении maxDate', () => {
             fixture.detectChanges();
             const periodButton = calendarElement.querySelector(
                 '.owl-dt-control-period-button'
@@ -491,7 +478,7 @@ describe('OwlCalendarComponent', () => {
         });
     });
 
-    describe('calendar with date filter', () => {
+    describe('Календарь с фильтром дат', () => {
         let fixture: ComponentFixture<CalendarWithDateFilterComponent>;
         let testComponent: CalendarWithDateFilterComponent;
         let calendarElement: HTMLElement;
@@ -509,21 +496,23 @@ describe('OwlCalendarComponent', () => {
             testComponent = fixture.componentInstance;
         });
 
-        it('should disable and prevent selection of filtered dates', () => {
+        it('блокирует исключённые фильтром даты и запрещает их выбор', () => {
             const monthCell = calendarElement.querySelector(
-                '[aria-label="January 2, 2018"]'
+                '[aria-label="03.01.2018"]'
             );
             expect(testComponent.selected).toBeFalsy();
 
             (monthCell as HTMLElement).click();
             fixture.detectChanges();
 
-            expect(testComponent.selected).toEqual(createTestDateTime(2018, JAN, 2));
+            expect(testComponent.selected)
+                .toBeFalsy();
         });
     });
 });
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Default,
     standalone: false,
     template: `
         <owl-date-time-calendar
@@ -543,6 +532,7 @@ class StandardCalendarComponent {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Default,
     standalone: false,
     template: `
         <owl-date-time-calendar [selectMode]="selectMode"
@@ -560,6 +550,7 @@ class CalendarWithMinMaxComponent {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Default,
     standalone: false,
     template: `
         <owl-date-time-calendar [selectMode]="selectMode"
@@ -575,6 +566,7 @@ class CalendarWithCalendarWeeks {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Default,
     standalone: false,
     template: `
         <owl-date-time-calendar [(selected)]="selected"

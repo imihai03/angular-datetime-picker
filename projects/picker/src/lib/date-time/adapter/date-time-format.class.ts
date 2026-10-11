@@ -14,5 +14,5 @@ export interface OwlDateTimeFormats {
     monthYearA11yLabel: any;
 }
 
-/** InjectionToken for date time picker that can be used to override default format. */
+/** InjectionToken для переопределения формата даты и времени */
 export const OWL_DATE_TIME_FORMATS = new InjectionToken<OwlDateTimeFormats>('OWL_DATE_TIME_FORMATS');

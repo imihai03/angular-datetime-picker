@@ -1,4 +1,4 @@
-// Based on @angular/cdk/testing
+// На основе @angular/cdk/testing
 import { EventEmitter, NgZone } from '@angular/core';
 import { DateTime } from 'luxon';
 
@@ -98,22 +98,22 @@ export function createKeyboardEvent(
     const event = document.createEvent('KeyboardEvent') as any;
     const originalPreventDefault = event.preventDefault;
 
-    // Firefox does not support `initKeyboardEvent`, but supports `initKeyEvent`.
+    // Firefox не поддерживает `initKeyboardEvent`, но поддерживает `initKeyEvent`
     if (event.initKeyEvent) {
         event.initKeyEvent(type, true, true, window, 0, 0, 0, 0, 0, keyCode);
     } else {
         event.initKeyboardEvent(type, true, true, window, 0, key, 0, '', false);
     }
 
-    // Webkit Browsers don't set the keyCode when calling the init function.
-    // See related bug https://bugs.webkit.org/show_bug.cgi?id=16735
+    // Браузеры WebKit не устанавливают keyCode при вызове функции инициализации
+    // Связанная ошибка: https://bugs.webkit.org/show_bug.cgi?id=16735
     Object.defineProperties(event, {
         keyCode: { get: () => keyCode },
         key: { get: () => key },
         target: { get: () => target }
     });
 
-    // IE won't set `defaultPrevented` on synthetic events so we need to do it manually.
+    // IE не устанавливает `defaultPrevented` у синтетических событий; делаем это вручную
     event.preventDefault = function() {
         Object.defineProperty(event, 'defaultPrevented', { get: () => true });
         return originalPreventDefault.apply(this, arguments);
@@ -132,7 +132,7 @@ export function dispatchMouseEvent(
     return dispatchEvent(node, event) as MouseEvent;
 }
 
-/** Creates a browser MouseEvent with the specified options. */
+/** Создаёт браузерный MouseEvent с указанными параметрами */
 export function createMouseEvent(type: string, x = 0, y = 0, button = 0) {
     const event = document.createEvent('MouseEvent');
 
@@ -154,8 +154,8 @@ export function createMouseEvent(type: string, x = 0, y = 0, button = 0) {
         null /* relatedTarget */
     );
 
-    // `initMouseEvent` doesn't allow us to pass the `buttons` and
-    // defaults it to 0 which looks like a fake event.
+    // `initMouseEvent` не позволяет передать `buttons` и
+    // по умолчанию устанавливает 0, из-за чего событие выглядит искусственным
     Object.defineProperty(event, 'buttons', { get: () => 1 });
 
     return event;

@@ -2,33 +2,10 @@
  * date-time-picker.component
  */
 
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  ComponentRef,
-  EventEmitter,
-  Inject,
-  InjectionToken,
-  Input,
-  NgZone,
-  OnDestroy,
-  OnInit,
-  Optional,
-  Output,
-  untracked,
-  ViewContainerRef
-} from '@angular/core';
+import { afterNextRender, AfterRenderRef, ChangeDetectionStrategy, ChangeDetectorRef, Component, ComponentRef, EventEmitter, Inject, inject, InjectionToken, Injector, Input, NgZone, OnDestroy, OnInit, Optional, Output, untracked, ViewContainerRef } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { ComponentPortal } from '@angular/cdk/portal';
-import {
-    BlockScrollStrategy,
-    Overlay,
-    OverlayConfig,
-    OverlayRef,
-    PositionStrategy,
-    ScrollStrategy
-} from '@angular/cdk/overlay';
+import { BlockScrollStrategy, Overlay, OverlayConfig, OverlayRef, PositionStrategy, ScrollStrategy } from '@angular/cdk/overlay';
 import { ESCAPE, UP_ARROW } from '@angular/cdk/keycodes';
 import { coerceArray, coerceBooleanProperty } from '@angular/cdk/coercion';
 import { merge, Subscription } from 'rxjs';
@@ -41,7 +18,7 @@ import { OwlDateTimeContainerComponent } from './date-time-picker-container.comp
 import { OwlDateTimeInputDirective } from './date-time-picker-input.directive';
 import { OwlDateTime, PickerMode, PickerType, SelectMode } from './date-time.class';
 
-/** Injection token that determines the scroll handling while the dtPicker is open. */
+/** Токен DI, определяющий обработку прокрутки при открытом компоненте выбора даты и времени */
 export const OWL_DTPICKER_SCROLL_STRATEGY = new InjectionToken<
     () => ScrollStrategy
 >('owl-dtpicker-scroll-strategy');
@@ -72,81 +49,50 @@ export const OWL_DTPICKER_SCROLL_STRATEGY_PROVIDER = {
 })
 export class OwlDateTimeComponent<T> extends OwlDateTime<T>
     implements OnInit, OnDestroy {
-    /** Custom class for the picker backdrop. */
+    /** Пользовательский класс фона компонента выбора */
     @Input()
     public backdropClass: string | string[] = [];
 
-    /** Custom class for the picker overlay pane. */
+    /** Пользовательский класс overlay-панели компонента выбора */
     @Input()
     public panelClass: string | string[] = [];
-
-    /** The date to open the calendar to initially. */
-    private _startAt: T | null;
+    /**
+     * Открывается ли компонент выбора в диалоговом окне
+     */
+    _pickerMode: PickerMode = 'popup';
+    /**
+     * Стратегия прокрутки при открытом компоненте выбора
+     * Подробнее: https://material.angular.io/cdk/overlay/overview#scroll-strategies
+     * */
     @Input()
-    get startAt(): T | null {
-        // If an explicit startAt is set we start there, otherwise we start at whatever the currently
-        // selected value is.
-        if (this._startAt) {
-            return this._startAt;
-        }
-
-        if (this._dtInput) {
-            if (this._dtInput.selectMode === 'single') {
-                return this._dtInput.value || null;
-            } else if (
-                this._dtInput.selectMode === 'range' ||
-                this._dtInput.selectMode === 'rangeFrom'
-            ) {
-                return this._dtInput.values[0] || null;
-            } else if (this._dtInput.selectMode === 'rangeTo') {
-                return this._dtInput.values[1] || null;
-            }
-        } else {
-            return null;
-        }
-    }
+    public scrollStrategy: ScrollStrategy;
 
     set startAt(date: T | null) {
         this._startAt = this.getValidDate(
             this.dateTimeAdapter.deserialize(date)
         );
     }
-
-    /** The end date to set for range calendar. */
-    private _endAt: T | null;
-    @Input()
-    get endAt(): T | null {
-        if (this._endAt) {
-            return this._endAt;
-        }
-
-        if (this._dtInput) {
-            if (this._dtInput.selectMode === 'single') {
-                return this._dtInput.value || null;
-            } else if (
-                this._dtInput.selectMode === 'range' ||
-                this._dtInput.selectMode === 'rangeFrom'
-            ) {
-                return this._dtInput.values[1] || null;
-            }
-        } else {
-            return null;
-        }
-    }
+    /**
+     * Обработчик закрытия компонента выбора
+     * */
+    @Output()
+    afterPickerClosed = new EventEmitter<any>();
+    /**
+     * Обработчик перед открытием компонента выбора
+     * */
+    @Output()
+    beforePickerOpen = new EventEmitter<any>();
 
     set endAt(date: T | null) {
         this._endAt = this.getValidDate(
             this.dateTimeAdapter.deserialize(date)
         );
     }
-
     /**
-     * Set the type of the dateTime picker
-     *      'both' -- show both calendar and timer
-     *      'calendar' -- show only calendar
-     *      'timer' -- show only timer
-     */
-    private _pickerType: PickerType = 'both';
+     * Обработчик открытия компонента выбора
+     * */
+    @Output()
+    afterPickerOpen = new EventEmitter<any>();
     @Input()
     get pickerType(): PickerType {
         return this._pickerType;
@@ -160,11 +106,12 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
             }
         }
     }
-
     /**
-     * Whether the picker open as a dialog
-     */
-    _pickerMode: PickerMode = 'popup';
+     * Передаёт выбранный год в представлении нескольких лет
+     * При этом выбранная дата не изменяется
+     * */
+    @Output()
+    yearSelected = new EventEmitter<T>();
     @Input()
     get pickerMode() {
         return this._pickerMode;
@@ -177,25 +124,41 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
             this._pickerMode = 'dialog';
         }
     }
-
-    /** Whether the date time picker should be disabled. */
-    private _disabled: boolean;
+    /**
+     * Передаёт выбранный месяц в представлении года
+     * При этом выбранная дата не изменяется
+     * */
+    @Output()
+    monthSelected = new EventEmitter<T>();
     @Input()
     get disabled(): boolean {
         return this._disabled === undefined && this._dtInput
             ? this._dtInput.disabled
             : !!this._disabled;
     }
-
-    set disabled(value: boolean) {
-        value = coerceBooleanProperty(value);
-        if (value !== this._disabled) {
-            this._disabled = value;
-            this.disabledChange.next(value);
-        }
-    }
-
-    /** Whether the calendar is open. */
+    /**
+     * Передаёт выбранную дату
+     * */
+    @Output()
+    dateSelected = new EventEmitter<T>();
+    /**
+     * Событие подтверждения выбранного значения
+     * */
+    public confirmSelectedChange = new EventEmitter<T[] | T>();
+    /**
+     * Событие отключения компонента выбора даты и времени
+     * */
+    public disabledChange = new EventEmitter<boolean>();
+    /**
+     * Задаёт тип компонента выбора даты и времени:
+     *      'both' — календарь и выбор времени
+     *      'calendar' — только календарь
+     *      'timer' — только выбор времени
+     */
+    private _pickerType: PickerType = 'both';
+    /** Отключён ли компонент выбора даты и времени */
+    private _disabled: boolean;
+    /** Открыт ли календарь */
     private _opened = false;
     @Input()
     get opened(): boolean {
@@ -205,61 +168,43 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
     set opened(val: boolean) {
         val ? this.open() : this.close();
     }
+    private closing = false;
+    private destroyed = false;
+    private positionRenderRef: AfterRenderRef | undefined;
+    private readonly injector = inject(Injector);
+    private dialogClosedStreamSub = Subscription.EMPTY;
+    /** Элемент, находившийся в фокусе до открытия компонента выбора даты и времени */
+    private focusedElementBeforeOpen: HTMLElement | null = null;
 
-    /**
-     * The scroll strategy when the picker is open
-     * Learn more this from https://material.angular.io/cdk/overlay/overview#scroll-strategies
-     * */
+    /** Дата, на которой календарь открывается изначально */
+    private _startAt: T | null;
+
     @Input()
-    public scrollStrategy: ScrollStrategy;
+    get startAt(): T | null {
+        // Если startAt задан явно, открываем календарь на этой дате
+        // Иначе используем текущее выбранное значение
+        if (this._startAt != null) {
+            return this._startAt;
+        }
 
-    /**
-     * Callback when the picker is closed
-     * */
-    @Output()
-    afterPickerClosed = new EventEmitter<any>();
+        if (this._dtInput) {
+            if (this._dtInput.selectMode === 'single') {
+                return this._dtInput.value ?? null;
+            } else if (
+                this._dtInput.selectMode === 'range' ||
+                this._dtInput.selectMode === 'rangeFrom'
+            ) {
+                return this._dtInput.values[0] ?? null;
+            } else if (this._dtInput.selectMode === 'rangeTo') {
+                return this._dtInput.values[1] ?? null;
+            }
+        } else {
+            return null;
+        }
+    }
 
-    /**
-     * Callback before the picker is open
-     * */
-    @Output()
-    beforePickerOpen = new EventEmitter<any>();
-
-    /**
-     * Callback when the picker is open
-     * */
-    @Output()
-    afterPickerOpen = new EventEmitter<any>();
-
-    /**
-     * Emits selected year in multi-year view
-     * This doesn't imply a change on the selected date.
-     * */
-    @Output()
-    yearSelected = new EventEmitter<T>();
-
-    /**
-     * Emits selected month in year view
-     * This doesn't imply a change on the selected date.
-     * */
-    @Output()
-    monthSelected = new EventEmitter<T>();
-
-    /**
-     * Emits selected date
-     * */
-    @Output()
-    dateSelected = new EventEmitter<T>();
-
-    /**
-     * Emit when the selected value has been confirmed
-     * */
-    public confirmSelectedChange = new EventEmitter<T[] | T>();
-
-    /**
-     * Emits when the date time picker is disabled.
-     * */
-    public disabledChange = new EventEmitter<boolean>();
+    /** Конечная дата календаря в режиме диапазона */
+    private _endAt: T | null;
 
     private pickerContainerPortal: ComponentPortal<
         OwlDateTimeContainerComponent<T>
@@ -267,14 +212,40 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
     private pickerContainer: OwlDateTimeContainerComponent<T>;
     private popupRef: OverlayRef;
     private dialogRef: OwlDialogRef<OwlDateTimeContainerComponent<T>>;
+
+    @Input()
+    get endAt(): T | null {
+        if (this._endAt != null) {
+            return this._endAt;
+        }
+
+        if (this._dtInput) {
+            if (this._dtInput.selectMode === 'single') {
+                return this._dtInput.value ?? null;
+            } else if (
+                this._dtInput.selectMode === 'range' ||
+                this._dtInput.selectMode === 'rangeFrom'
+            ) {
+                return this._dtInput.values[1] ?? null;
+            }
+        } else {
+            return null;
+        }
+    }
     private dtInputSub = Subscription.EMPTY;
     private hidePickerStreamSub = Subscription.EMPTY;
     private confirmSelectedStreamSub = Subscription.EMPTY;
     private pickerOpenedStreamSub = Subscription.EMPTY;
     private pickerBeforeOpenedStreamSub = Subscription.EMPTY;
 
-    /** The element that was focused before the date time picker was opened. */
-    private focusedElementBeforeOpen: HTMLElement | null = null;
+    set disabled(value: boolean) {
+        value = coerceBooleanProperty(value);
+        if (value !== this._disabled) {
+            this._disabled = value;
+            this.disabledChange.next(value);
+            this.refreshView();
+        }
+    }
 
     private _dtInput: OwlDateTimeInputDirective<T>;
     get dtInput() {
@@ -288,7 +259,7 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
 
     set selected(value: T | null) {
         this._selected = value;
-        this.changeDetector.markForCheck();
+        this.refreshView();
     }
 
     private _selecteds: T[] = [];
@@ -298,15 +269,15 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
 
     set selecteds(values: T[]) {
         this._selecteds = values;
-        this.changeDetector.markForCheck();
+        this.refreshView();
     }
 
-    /** The minimum selectable date. */
+    /** Минимальная доступная для выбора дата */
     get minDateTime(): T | null {
         return this._dtInput && this._dtInput.min;
     }
 
-    /** The maximum selectable date. */
+    /** Максимальная доступная для выбора дата */
     get maxDateTime(): T | null {
         return this._dtInput && this._dtInput.max;
     }
@@ -348,9 +319,15 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
         this.defaultScrollStrategy = defaultScrollStrategy;
     }
 
+    public refreshView(): void {
+        this.changeDetector.markForCheck();
+        this.pickerContainer?.refreshView();
+    }
+
     public ngOnInit() {}
 
     public ngOnDestroy(): void {
+        this.destroyed = true;
         this.close();
         this.dtInputSub.unsubscribe();
         this.disabledChange.complete();
@@ -380,7 +357,7 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
     }
 
     public open(): void {
-        if (this._opened || this.disabled) {
+        if (this._opened || this.closing || this.destroyed || this.disabled) {
             return;
         }
 
@@ -394,16 +371,16 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
             this.focusedElementBeforeOpen = this.document.activeElement;
         }
 
-        // reset the picker selected value
+        // Сбрасываем выбранное значение компонента
         if (this.isInSingleMode) {
             this.selected = this._dtInput.value;
         } else if (this.isInRangeMode) {
             this.selecteds = this._dtInput.values;
         }
 
-        // when the picker is open , we make sure the picker's current selected time value
-        // is the same as the _startAt time value.
-        if (this.selected && this.pickerType !== 'calendar' && this._startAt) {
+        // При открытии компонента выбора приводим текущее выбранное время
+        // к времени из _startAt
+        if (this.selected != null && this.pickerType !== 'calendar' && this._startAt != null) {
             this.selected = this.dateTimeAdapter.createDate(
                 this.dateTimeAdapter.getYear(this.selected),
                 this.dateTimeAdapter.getMonth(this.selected),
@@ -414,18 +391,20 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
             );
         }
 
+        this._opened = true;
+        this.changeDetector.markForCheck();
         this.pickerMode === 'dialog' ? this.openAsDialog() : this.openAsPopup();
 
         this.pickerContainer.picker = this;
 
-        // Listen to picker container's hidePickerStream
+        // Подписываемся на hidePickerStream контейнера компонента выбора
         this.hidePickerStreamSub = this.pickerContainer.hidePickerStream.subscribe(
             () => {
                 this.close();
             }
         );
 
-        // Listen to picker container's confirmSelectedStream
+        // Подписываемся на confirmSelectedStream контейнера компонента выбора
         this.confirmSelectedStreamSub = this.pickerContainer.confirmSelectedStream.subscribe(
             (event: any) => {
                 this.confirmSelect(event);
@@ -434,7 +413,7 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
     }
 
     /**
-     * Selects the given date
+     * Выбирает указанную дату
      */
     public select(date: T[] | T): void {
         if (Array.isArray(date)) {
@@ -444,125 +423,95 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
         }
 
         /**
-         * Cases in which automatically confirm the select when date or dates are selected:
-         * 1) picker mode is NOT 'dialog'
-         * 2) picker type is 'calendar' and selectMode is 'single'.
-         * 3) picker type is 'calendar' and selectMode is 'range' and
-         *    the 'selecteds' has 'from'(selecteds[0]) and 'to'(selecteds[1]) values.
-         * 4) selectMode is 'rangeFrom' and selecteds[0] has value.
-         * 5) selectMode is 'rangeTo' and selecteds[1] has value.
+         * Условия автоматического подтверждения выбранной даты или диапазона:
+         * 1) Режим компонента отличается от 'dialog'
+         * 2) Тип компонента — 'calendar', а selectMode — 'single'
+         * 3) Тип компонента — 'calendar', selectMode — 'range',
+         *    а в selecteds заданы начало (selecteds[0]) и конец (selecteds[1]) диапазона
+         * 4) selectMode — 'rangeFrom', а selecteds[0] содержит значение
+         * 5) selectMode — 'rangeTo', а selecteds[1] содержит значение
          * */
         if (
             this.pickerMode !== 'dialog' &&
             this.pickerType === 'calendar' &&
-            ((this.selectMode === 'single' && this.selected) ||
-                (this.selectMode === 'rangeFrom' && this.selecteds[0]) ||
-                (this.selectMode === 'rangeTo' && this.selecteds[1]) ||
+            ((this.selectMode === 'single' && this.selected != null) ||
+                (this.selectMode === 'rangeFrom' && this.selecteds[0] != null) ||
+                (this.selectMode === 'rangeTo' && this.selecteds[1] != null) ||
                 (this.selectMode === 'range' &&
-                    this.selecteds[0] &&
-                    this.selecteds[1]))
+                    this.selecteds[0] != null &&
+                    this.selecteds[1] != null))
         ) {
             this.confirmSelect();
         }
     }
 
     /**
-     * Emits the selected year in multi-year view
+     * Передаёт выбранный год в представлении нескольких лет
      * */
     public selectYear(normalizedYear: T): void {
         this.yearSelected.emit(normalizedYear);
     }
 
     /**
-     * Emits selected month in year view
+     * Передаёт выбранный месяц в представлении года
      * */
     public selectMonth(normalizedMonth: T): void {
         this.monthSelected.emit(normalizedMonth);
     }
 
     /**
-     * Emits the selected date
+     * Передаёт выбранную дату
      * */
      public selectDate(normalizedDate: T): void {
         this.dateSelected.emit(normalizedDate);
     }
 
     /**
-     * Hide the picker
+     * Закрывает компонент выбора
      */
     public close(): void {
-        if (!this._opened) {
+        if (!this._opened || this.closing) {
             return;
         }
 
-        if (this.popupRef && this.popupRef.hasAttached()) {
+        this.closing = true;
+        this._opened = false;
+        this.positionRenderRef?.destroy();
+        this.positionRenderRef = undefined;
+        this.hidePickerStreamSub?.unsubscribe();
+        this.confirmSelectedStreamSub?.unsubscribe();
+        this.pickerBeforeOpenedStreamSub?.unsubscribe();
+        this.pickerOpenedStreamSub?.unsubscribe();
+        this.dialogClosedStreamSub.unsubscribe();
+
+        const dialogRef = this.dialogRef;
+        this.dialogRef = null;
+        dialogRef?.close();
+
+        if (this.popupRef?.hasAttached()) {
             this.popupRef.detach();
         }
-
-        if (
-            this.pickerContainerPortal &&
-            this.pickerContainerPortal.isAttached
-        ) {
+        if (this.pickerContainerPortal?.isAttached) {
             this.pickerContainerPortal.detach();
         }
 
-        if (this.hidePickerStreamSub) {
-            this.hidePickerStreamSub.unsubscribe();
-            this.hidePickerStreamSub = null;
-        }
+        this.pickerContainer = null;
 
-        if (this.confirmSelectedStreamSub) {
-            this.confirmSelectedStreamSub.unsubscribe();
-            this.confirmSelectedStreamSub = null;
-        }
-
-        if (this.pickerBeforeOpenedStreamSub) {
-            this.pickerBeforeOpenedStreamSub.unsubscribe();
-            this.pickerBeforeOpenedStreamSub = null;
-        }
-
-        if (this.pickerOpenedStreamSub) {
-            this.pickerOpenedStreamSub.unsubscribe();
-            this.pickerOpenedStreamSub = null;
-        }
-
-        if (this.dialogRef) {
-            this.dialogRef.close();
-            this.dialogRef = null;
-        }
-
-        const completeClose = () => {
-            if (this._opened) {
-                this._opened = false;
-                const selected = this.selected || this.selecteds;
-                this.afterPickerClosed.emit(selected);
-                this.focusedElementBeforeOpen = null;
-            }
-        };
-
-        if (
-            this.focusedElementBeforeOpen &&
-            typeof this.focusedElementBeforeOpen.focus === 'function'
-        ) {
-            // Because IE moves focus asynchronously, we can't count on it being restored before we've
-            // marked the datepicker as closed. If the event fires out of sequence and the element that
-            // we're refocusing opens the datepicker on focus, the user could be stuck with not being
-            // able to close the calendar at all. We work around it by making the logic, that marks
-            // the datepicker as closed, async as well.
-            this.focusedElementBeforeOpen.focus();
-            setTimeout(completeClose);
-        } else {
-            completeClose();
-        }
+        // Игнорируем обработчики фокуса, пытающиеся повторно открыть компонент при восстановлении фокуса
+        this.focusedElementBeforeOpen?.focus();
+        this.focusedElementBeforeOpen = null;
+        this.changeDetector.markForCheck();
+        this.closing = false;
+        this.afterPickerClosed.emit(this.isInSingleMode ? this.selected : this.selecteds);
     }
 
     /**
-     * Confirm the selected value
+     * Подтверждает выбранное значение
      */
     public confirmSelect(event?: any): void {
         if (this.isInSingleMode) {
             const selected =
-                this.selected || this.startAt || this.dateTimeAdapter.now();
+                      this.selected ?? this.startAt ?? this.dateTimeAdapter.now();
             this.confirmSelectedChange.emit(selected);
         } else if (this.isInRangeMode) {
             this.confirmSelectedChange.emit(this.selecteds);
@@ -573,7 +522,7 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
     }
 
     /**
-     * Open the picker as a dialog
+     * Открывает компонент выбора в диалоговом окне
      */
     private openAsDialog(): void {
         this.dialogRef = this.dialogService.open(
@@ -592,18 +541,20 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
         );
         this.pickerContainer = untracked(this.dialogRef.componentInstance);
 
-        this.dialogRef.beforeOpen().subscribe(() => {
+        this.pickerBeforeOpenedStreamSub = this.dialogRef.beforeOpen()
+            .subscribe(() => {
             this.beforePickerOpen.emit(null);
         });
-        this.dialogRef.afterOpen().subscribe(() => {
+        this.pickerOpenedStreamSub = this.dialogRef.afterOpen()
+            .subscribe(() => {
             this.afterPickerOpen.emit(null);
-            this._opened = true;
         });
-        this.dialogRef.afterClosed().subscribe(() => this.close());
+        this.dialogClosedStreamSub = this.dialogRef.afterClosed()
+            .subscribe(() => this.close());
     }
 
     /**
-     * Open the picker as popup
+     * Открывает компонент выбора во всплывающем окне
      */
     private openAsPopup(): void {
         if (!this.pickerContainerPortal) {
@@ -622,13 +573,16 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
             > = this.popupRef.attach(this.pickerContainerPortal);
             this.pickerContainer = componentRef.instance;
 
-            // Update the position once the calendar has rendered.
-            this.ngZone.onStable
-                .asObservable()
-                .pipe(take(1))
-                .subscribe(() => {
-                    this.popupRef.updatePosition();
-                });
+            // Обновляем положение после отрисовки календаря
+            this.positionRenderRef?.destroy();
+            this.positionRenderRef = afterNextRender({
+                mixedReadWrite: () => {
+                    this.positionRenderRef = undefined;
+                    if (this.popupRef.hasAttached()) {
+                        this.popupRef.updatePosition();
+                    }
+                }
+            }, { injector: this.injector });
 
             this.pickerBeforeOpenedStreamSub = this.pickerContainer.beforePickerOpenedStream
                 .pipe(take(1))
@@ -636,12 +590,11 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
                     this.beforePickerOpen.emit(null);
                 });
 
-            // emit open stream
+            // Отправляем событие открытия
             this.pickerOpenedStreamSub = this.pickerContainer.pickerOpenedStream
                 .pipe(take(1))
                 .subscribe(() => {
                     this.afterPickerOpen.emit(null);
-                    this._opened = true;
                 });
         }
     }
@@ -678,7 +631,7 @@ export class OwlDateTimeComponent<T> extends OwlDateTime<T>
     }
 
     /**
-     * Create the popup PositionStrategy.
+     * Создаёт PositionStrategy всплывающего окна
      * */
     private createPopupPositionStrategy(): PositionStrategy {
         return this.overlay

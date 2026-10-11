@@ -2,17 +2,7 @@
  * timer-box.component
  */
 
-import {
-    ChangeDetectionStrategy,
-    Component,
-    EventEmitter,
-    ElementRef,
-    ViewChild,
-    Input,
-    OnDestroy,
-    OnInit,
-    Output
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { coerceNumberProperty } from '@angular/cdk/coercion';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -43,8 +33,8 @@ export class OwlTimerBoxComponent implements OnInit, OnDestroy {
     @Input() downBtnDisabled: boolean;
 
     /**
-     * Value would be displayed in the box
-     * If it is null, the box would display [value]
+     * Значение, отображаемое в поле
+     * Если равно null, в поле отображается [value]
      * */
     @Input() boxValue: number;
 
@@ -66,21 +56,9 @@ export class OwlTimerBoxComponent implements OnInit, OnDestroy {
 
     private inputStreamSub = Subscription.EMPTY;
 
-    private hasFocus = false;
+    private isEditing = false;
 
-    get displayValue(): string {
-        if (this.hasFocus) {
-            // Don't try to reformat the value that user is currently editing
-            return this.valueInput.nativeElement.value;
-        }
-
-        const value = this.boxValue || this.value;
-
-        if (value === null || isNaN(value)) {
-            return '';
-        }
-
-        return value < 10 ? '0' + value.toString() : value.toString();
+    constructor(private changeDetector: ChangeDetectorRef) {
     }
 
     get owlDTTimerBoxClass(): boolean {
@@ -91,7 +69,19 @@ export class OwlTimerBoxComponent implements OnInit, OnDestroy {
     private valueInput: ElementRef<HTMLInputElement>;
     private onValueInputMouseWheelBind = this.onValueInputMouseWheel.bind(this);
 
-    constructor() {
+    get displayValue(): string {
+        if (this.isEditing) {
+            // Не переформатируем значение, пока пользователь его редактирует
+            return this.valueInput.nativeElement.value;
+        }
+
+        const value = this.boxValue ?? this.value;
+
+        if (value == null || isNaN(value)) {
+            return '';
+        }
+
+        return value < 10 ? '0' + value.toString() : value.toString();
     }
 
     public ngOnInit() {
@@ -118,22 +108,29 @@ export class OwlTimerBoxComponent implements OnInit, OnDestroy {
     }
 
     public handleInputChange(val: string ): void {
+        this.isEditing = true;
         this.inputStream.next(val);
     }
 
     public focusIn(): void {
-        this.hasFocus = true;
+        this.isEditing = true;
     }
 
     public focusOut(value: string): void {
-        this.hasFocus = false;
-        if (value) {
+        const wasEditing = this.isEditing;
+        this.isEditing = false;
+        // Отменяем ожидающий debounce: blur сразу фиксирует текущий текст
+        this.inputStream.next('');
+        if (wasEditing && value) {
             const inputValue = coerceNumberProperty(value, 0);
             this.updateValueViaInput(inputValue);
         }
     }
 
     private updateValue( value: number ): void {
+        // Шаг заменяет введённый текст; отложенный input и blur не должны откатывать значение
+        this.isEditing = false;
+        this.inputStream.next('');
         this.valueChange.emit(value);
     }
 
@@ -146,7 +143,7 @@ export class OwlTimerBoxComponent implements OnInit, OnDestroy {
 
     private onValueInputMouseWheel( event: any ): void {
         event = event || window.event;
-        const delta = event.wheelDelta || -event.deltaY || -event.detail;
+        const delta = event.deltaY != null ? -event.deltaY : event.wheelDelta || -event.detail;
 
         if (delta > 0) {
           if (!this.upBtnDisabled) {
@@ -158,18 +155,19 @@ export class OwlTimerBoxComponent implements OnInit, OnDestroy {
           }
         }
 
+        this.changeDetector.markForCheck();
         event.preventDefault ? event.preventDefault() : (event.returnValue = false);
     }
 
     private bindValueInputMouseWheel(): void {
         this.valueInput.nativeElement.addEventListener(
-            'onwheel' in document ? 'wheel' : 'mousewheel',
+            'onwheel' in this.valueInput.nativeElement.ownerDocument ? 'wheel' : 'mousewheel',
             this.onValueInputMouseWheelBind);
     }
 
     private unbindValueInputMouseWheel(): void {
         this.valueInput.nativeElement.removeEventListener(
-            'onwheel' in document ? 'wheel' : 'mousewheel',
+            'onwheel' in this.valueInput.nativeElement.ownerDocument ? 'wheel' : 'mousewheel',
             this.onValueInputMouseWheelBind);
     }
 }

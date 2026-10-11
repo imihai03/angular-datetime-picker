@@ -1,30 +1,16 @@
+import { ChangeDetectionStrategy, Component, DebugElement, provideZoneChangeDetection } from '@angular/core';
 /**
  * calendar-year-view.component.spec
  */
-
 import { DateTime } from 'luxon';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OwlDateTimeIntl } from './date-time-picker-intl.service';
 import { OwlLuxonDateTimeModule } from './adapter/luxon-date-time.module';
 import { OwlDateTimeModule } from './date-time.module';
-import { Component, DebugElement } from '@angular/core';
 import { OwlYearViewComponent } from './calendar-year-view.component';
 import { By } from '@angular/platform-browser';
-import {
-    createTestDateTime,
-    dispatchKeyboardEvent,
-    dispatchMouseEvent
-} from '../../test-helpers';
-import {
-    DOWN_ARROW,
-    END,
-    HOME,
-    LEFT_ARROW,
-    PAGE_DOWN,
-    PAGE_UP,
-    RIGHT_ARROW,
-    UP_ARROW
-} from '@angular/cdk/keycodes';
+import { createTestDateTime, dispatchKeyboardEvent, dispatchMouseEvent } from '../../test-helpers';
+import { DOWN_ARROW, END, HOME, LEFT_ARROW, PAGE_DOWN, PAGE_UP, RIGHT_ARROW, UP_ARROW } from '@angular/cdk/keycodes';
 
 const JAN = 0,
     FEB = 1,
@@ -39,7 +25,7 @@ const JAN = 0,
     NOV = 10,
     DEC = 11;
 
-describe('OwlYearViewComponent', () => {
+describe('Компонент OwlYearViewComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [OwlLuxonDateTimeModule, OwlDateTimeModule],
@@ -47,11 +33,11 @@ describe('OwlYearViewComponent', () => {
                 StandardYearViewComponent,
                 YearViewWithDateFilterComponent
             ],
-            providers: [OwlDateTimeIntl]
+            providers: [provideZoneChangeDetection(), OwlDateTimeIntl]
         }).compileComponents();
     });
 
-    describe('standard year view', () => {
+    describe('Стандартное представление года', () => {
         let fixture: ComponentFixture<StandardYearViewComponent>;
         let testComponent: StandardYearViewComponent;
         let yearViewDebugElement: DebugElement;
@@ -70,21 +56,21 @@ describe('OwlYearViewComponent', () => {
             yearViewInstance = yearViewDebugElement.componentInstance;
         });
 
-        it('should have 12 months', () => {
+        it('отображает 12 месяцев', () => {
             const cellEls = yearViewElement.querySelectorAll(
                 '.owl-dt-calendar-cell'
             );
             expect(cellEls.length).toBe(12);
         });
 
-        it('should show selected month if in same year', () => {
+        it('отображает выбранный месяц в текущем году', () => {
             const selectedElContent = yearViewElement.querySelector(
                 '.owl-dt-calendar-cell-selected.owl-dt-calendar-cell-content'
             );
             expect(selectedElContent.innerHTML.trim()).toBe('Jan');
         });
 
-        it('should NOT show selected month if in different year', () => {
+        it('не отображает выбранный месяц из другого года', () => {
             testComponent.selected = createTestDateTime(2017, JAN, 10);
             fixture.detectChanges();
 
@@ -94,7 +80,7 @@ describe('OwlYearViewComponent', () => {
             expect(selectedElContent).toBeNull();
         });
 
-        it('should fire change event on cell clicked', () => {
+        it('отправляет событие изменения при нажатии на ячейку', () => {
             const cellDecember = yearViewElement.querySelector(
                 '[aria-label="December 2018"]'
             );
@@ -107,7 +93,7 @@ describe('OwlYearViewComponent', () => {
             expect(selectedElContent.innerHTML.trim()).toBe('Dec');
         });
 
-        it('should mark active date', () => {
+        it('отмечает активную дату', () => {
             const cellDecember = yearViewElement.querySelector(
                 '[aria-label="January 2018"]'
             );
@@ -117,7 +103,7 @@ describe('OwlYearViewComponent', () => {
             );
         });
 
-        it('should allow selection of month with less days than current active date', () => {
+        it('разрешает выбор месяца с меньшим числом дней, чем день текущей активной даты', () => {
             testComponent.pickerDateTime = createTestDateTime(2017, JUL, 31);
             fixture.detectChanges();
 
@@ -130,7 +116,7 @@ describe('OwlYearViewComponent', () => {
             expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2017, JUN, 30));
         });
 
-        it('should decrement month on left arrow press', () => {
+        it('переходит к предыдущему месяцу по ArrowLeft', () => {
             const calendarBodyEl = yearViewElement.querySelector(
                 '.owl-dt-calendar-body'
             );
@@ -149,7 +135,7 @@ describe('OwlYearViewComponent', () => {
             );
         });
 
-        it('should increment month on right arrow press', () => {
+        it('переходит к следующему месяцу по ArrowRight', () => {
             const calendarBodyEl = yearViewElement.querySelector(
                 '.owl-dt-calendar-body'
             );
@@ -168,7 +154,7 @@ describe('OwlYearViewComponent', () => {
             );
         });
 
-        it('should go up a row on up arrow press', () => {
+        it('переходит на строку выше по ArrowUp', () => {
             const calendarBodyEl = yearViewElement.querySelector(
                 '.owl-dt-calendar-body'
             );
@@ -200,7 +186,7 @@ describe('OwlYearViewComponent', () => {
             );
         });
 
-        it('should go down a row on down arrow press', () => {
+        it('переходит на строку ниже по ArrowDown', () => {
             const calendarBodyEl = yearViewElement.querySelector(
                 '.owl-dt-calendar-body'
             );
@@ -232,7 +218,7 @@ describe('OwlYearViewComponent', () => {
             );
         });
 
-        it('should go to first month of the year on home press', () => {
+        it('переходит к первому месяцу года по Home', () => {
             yearViewInstance.pickerDateTime = createTestDateTime(2018, SEP, 30);
             fixture.detectChanges();
 
@@ -254,7 +240,7 @@ describe('OwlYearViewComponent', () => {
             );
         });
 
-        it('should go to last month of the year on end press', () => {
+        it('переходит к последнему месяцу года по End', () => {
             yearViewInstance.pickerDateTime = createTestDateTime(2018, OCT, 31);
             fixture.detectChanges();
 
@@ -276,7 +262,7 @@ describe('OwlYearViewComponent', () => {
             );
         });
 
-        it('should go back one year on page up press', () => {
+        it('переходит на год назад по PageUp', () => {
             yearViewInstance.pickerDateTime = createTestDateTime(2016, FEB, 29);
             fixture.detectChanges();
 
@@ -298,7 +284,7 @@ describe('OwlYearViewComponent', () => {
             );
         });
 
-        it('should go forward one year on page down press', () => {
+        it('переходит на год вперёд по PageDown', () => {
             yearViewInstance.pickerDateTime = createTestDateTime(2016, FEB, 29);
             fixture.detectChanges();
 
@@ -321,7 +307,7 @@ describe('OwlYearViewComponent', () => {
         });
     });
 
-    describe('year view with date filter', () => {
+    describe('Представление года с фильтром дат', () => {
         let fixture: ComponentFixture<YearViewWithDateFilterComponent>;
         let yearViewNativeElement: Element;
 
@@ -335,7 +321,7 @@ describe('OwlYearViewComponent', () => {
             yearViewNativeElement = yearViewDebugElement.nativeElement;
         });
 
-        it('should disable filtered months', () => {
+        it('блокирует месяцы, исключённые фильтром', () => {
             const cellJan = yearViewNativeElement.querySelector(
                 '[aria-label="January 2018"]'
             );
@@ -353,6 +339,7 @@ describe('OwlYearViewComponent', () => {
 });
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Default,
     standalone: false,
     template: `
         <owl-date-time-year-view
@@ -371,6 +358,7 @@ class StandardYearViewComponent {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Default,
     standalone: false,
     template: `
         <owl-date-time-year-view

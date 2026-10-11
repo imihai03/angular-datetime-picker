@@ -3,24 +3,14 @@
  */
 
 import { DateTime } from 'luxon';
-import { EventEmitter } from '@angular/core';
-import {
-    ComponentFixture,
-    fakeAsync,
-    flush,
-    TestBed
-} from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { OwlDateTimeIntl } from './date-time-picker-intl.service';
-import { Component, DebugElement, NgZone } from '@angular/core';
-import { discardPeriodicTasks } from '@angular/core/testing';
+import { ChangeDetectionStrategy, Component, DebugElement, provideZoneChangeDetection } from '@angular/core';
 import { OwlLuxonDateTimeModule } from './adapter/luxon-date-time.module';
 import { OwlDateTimeModule } from './date-time.module';
 import { By } from '@angular/platform-browser';
 import { OwlTimerComponent } from './timer.component';
-import {
-    createTestDateTime,
-    dispatchFakeEvent
-} from '../../test-helpers';
+import { createTestDateTime, dispatchFakeEvent } from '../../test-helpers';
 
 const JAN = 0,
     FEB = 1,
@@ -35,37 +25,19 @@ const JAN = 0,
     NOV = 10,
     DEC = 11;
 
-class MockNgZone extends NgZone {
-    onStable: EventEmitter<any> = new EventEmitter(false);
-    constructor() {
-        super({ enableLongStackTrace: false });
-    }
-    run(fn: Function): any {
-        return fn();
-    }
-    runOutsideAngular(fn: Function): any {
-        return fn();
-    }
-    simulateZoneExit(): void {
-        this.onStable.emit(null);
-    }
-}
-
-describe('OwlTimerComponent', () => {
-    let zone: MockNgZone;
-
+describe('Компонент OwlTimerComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [OwlLuxonDateTimeModule, OwlDateTimeModule],
             declarations: [StandardTimerComponent],
             providers: [
                 OwlDateTimeIntl,
-                { provide: NgZone, useFactory: () => (zone = new MockNgZone()) }
+                provideZoneChangeDetection()
             ]
         }).compileComponents();
     });
 
-    describe('standard timer', () => {
+    describe('Стандартный таймер', () => {
         let fixture: ComponentFixture<StandardTimerComponent>;
         let testComponent: StandardTimerComponent;
         let timerDebugElement: DebugElement;
@@ -84,7 +56,7 @@ describe('OwlTimerComponent', () => {
             timerInstance = timerDebugElement.componentInstance;
         });
 
-        it('should have two timer boxes if showSecondsTimer set to false', () => {
+        it('отображает два поля времени при showSecondsTimer равном false', () => {
             const timerBoxes = timerElement.querySelectorAll(
                 'owl-date-time-timer-box'
             );
@@ -92,7 +64,7 @@ describe('OwlTimerComponent', () => {
             expect(timerBoxes.length).toBe(2);
         });
 
-        it('should have three timer boxes if showSecondsTimer set to true', () => {
+        it('отображает три поля времени при showSecondsTimer равном true', () => {
             testComponent.showSecondsTimer = true;
             fixture.detectChanges();
 
@@ -103,7 +75,7 @@ describe('OwlTimerComponent', () => {
             expect(timerBoxes.length).toBe(3);
         });
 
-        it('should NOT have the hour12 toggle button if hour12Timer set to false', () => {
+        it('скрывает переключатель hour12 при hour12Timer равном false', () => {
             const toggleBtn = timerElement.querySelector(
                 'button.owl-dt-timer-hour12-box'
             );
@@ -111,7 +83,7 @@ describe('OwlTimerComponent', () => {
             expect(toggleBtn).toBeFalsy();
         });
 
-        it('should have the hour12 toggle button if hour12Timer set to true', () => {
+        it('отображает переключатель hour12 при hour12Timer равном true', () => {
             testComponent.hour12Timer = true;
             fixture.detectChanges();
 
@@ -122,7 +94,7 @@ describe('OwlTimerComponent', () => {
             expect(toggleBtn).toBeTruthy();
         });
 
-        it('should dispatch an event when a timer arrow button clicked', fakeAsync(() => {
+        it('отправляет событие при нажатии кнопки со стрелкой таймера', fakeAsync(() => {
             spyOn(testComponent, 'handleSelectedChange');
             expect(testComponent.handleSelectedChange).not.toHaveBeenCalled();
 
@@ -143,7 +115,7 @@ describe('OwlTimerComponent', () => {
             expect(testComponent.handleSelectedChange).toHaveBeenCalledTimes(6);
         }));
 
-        it('should dispatch an event when hour12 toggle button clicked', fakeAsync(() => {
+        it('отправляет событие при нажатии переключателя hour12', fakeAsync(() => {
             spyOn(testComponent, 'handleSelectedChange');
             expect(testComponent.handleSelectedChange).not.toHaveBeenCalled();
 
@@ -161,7 +133,7 @@ describe('OwlTimerComponent', () => {
             expect(testComponent.handleSelectedChange).toHaveBeenCalledTimes(1);
         }));
 
-        it('should add or minus stepHour hours when hour arrow button clicked', fakeAsync(() => {
+        it('прибавляет или вычитает stepHour часов при нажатии стрелки часов', fakeAsync(() => {
             expect(timerInstance.stepHour).toBe(1);
 
             const arrowBtns = timerElement.querySelectorAll<HTMLButtonElement>(
@@ -202,7 +174,7 @@ describe('OwlTimerComponent', () => {
             );
         }));
 
-        it('should add or minus stepMinute minutes when minute arrow button clicked', fakeAsync(() => {
+        it('прибавляет или вычитает stepMinute минут при нажатии стрелки минут', fakeAsync(() => {
             expect(timerInstance.stepMinute).toBe(1);
 
             const arrowBtns = timerElement.querySelectorAll<HTMLButtonElement>(
@@ -243,7 +215,7 @@ describe('OwlTimerComponent', () => {
             );
         }));
 
-        it('should add or minus stepSecond seconds when second arrow button clicked', fakeAsync(() => {
+        it('прибавляет или вычитает stepSecond секунд при нажатии стрелки секунд', fakeAsync(() => {
             expect(timerInstance.stepSecond).toBe(1);
 
             testComponent.showSecondsTimer = true;
@@ -286,7 +258,7 @@ describe('OwlTimerComponent', () => {
             );
         }));
 
-        it('should toggle between PM and AM when hour12 toggle button clicked', fakeAsync(() => {
+        it('переключает PM и AM при нажатии переключателя hour12', fakeAsync(() => {
             testComponent.hour12Timer = true;
             fixture.detectChanges();
 
@@ -305,7 +277,7 @@ describe('OwlTimerComponent', () => {
             );
         }));
 
-        it('should disable all down arrow button if pickerDateTime equals to minDateTime', () => {
+        it('блокирует все стрелки вниз при pickerDateTime равном minDateTime', () => {
             testComponent.showSecondsTimer = true;
             fixture.detectChanges();
             const arrowBtns = timerElement.querySelectorAll<HTMLButtonElement>(
@@ -316,18 +288,18 @@ describe('OwlTimerComponent', () => {
             testComponent.pickerDateTime = createTestDateTime(testComponent.minDateTime);
             fixture.detectChanges();
 
-            // up arrow buttons
+            // Кнопки со стрелками вверх
             expect(arrowBtns[0].hasAttribute('disabled')).toBe(false);
             expect(arrowBtns[2].hasAttribute('disabled')).toBe(false);
             expect(arrowBtns[4].hasAttribute('disabled')).toBe(false);
 
-            // down arrow buttons
+            // Кнопки со стрелками вниз
             expect(arrowBtns[1].hasAttribute('disabled')).toBe(true);
             expect(arrowBtns[3].hasAttribute('disabled')).toBe(true);
             expect(arrowBtns[5].hasAttribute('disabled')).toBe(true);
         });
 
-        it('should disable all up arrow button if pickerDateTime equals to maxDateTime', () => {
+        it('блокирует все стрелки вверх при pickerDateTime равном maxDateTime', () => {
             testComponent.showSecondsTimer = true;
             fixture.detectChanges();
             const arrowBtns = timerElement.querySelectorAll<HTMLButtonElement>(
@@ -338,18 +310,18 @@ describe('OwlTimerComponent', () => {
             testComponent.pickerDateTime = createTestDateTime(testComponent.maxDateTime);
             fixture.detectChanges();
 
-            // up arrow buttons
+            // Кнопки со стрелками вверх
             expect(arrowBtns[0].hasAttribute('disabled')).toBe(true);
             expect(arrowBtns[2].hasAttribute('disabled')).toBe(true);
             expect(arrowBtns[4].hasAttribute('disabled')).toBe(true);
 
-            // down arrow buttons
+            // Кнопки со стрелками вниз
             expect(arrowBtns[1].hasAttribute('disabled')).toBe(false);
             expect(arrowBtns[3].hasAttribute('disabled')).toBe(false);
             expect(arrowBtns[5].hasAttribute('disabled')).toBe(false);
         });
 
-        it('should not reformat input text while field is focused', fakeAsync(() => {
+        it('не переформатирует текст, пока поле находится в фокусе', fakeAsync(() => {
             const timeCells = timerElement.querySelectorAll<HTMLInputElement>('.owl-dt-timer-input');
 
             dispatchFakeEvent(timeCells[0], 'focusin');
@@ -373,6 +345,7 @@ describe('OwlTimerComponent', () => {
 });
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Default,
     standalone: false,
     template: `
         <owl-date-time-timer

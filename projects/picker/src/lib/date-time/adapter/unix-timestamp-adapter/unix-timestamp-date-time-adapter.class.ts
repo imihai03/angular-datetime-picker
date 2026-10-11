@@ -5,21 +5,18 @@
 import { Inject, Injectable, Optional } from '@angular/core';
 import { DateTime, Info, Settings } from 'luxon';
 
-import {
-    DateTimeAdapter,
-    OWL_DATE_TIME_LOCALE,
-} from '../date-time-adapter.class';
+import { DateTimeAdapter, OWL_DATE_TIME_LOCALE } from '../date-time-adapter.class';
 
 @Injectable()
 export class UnixTimestampDateTimeAdapter extends DateTimeAdapter<number> {
     public firstMonthOfTheYear = 0;
 
     /**
-     * Picker expects:
-     * 0 - Sunday
-     * 1 - Monday
+     * Компонент выбора даты ожидает:
+     * 0 - воскресенье
+     * 1 - понедельник
      * ...
-     * 6 - Saturday
+     * 6 - суббота
      */
     public firstDayOfTheWeek = 0;
 
@@ -38,26 +35,26 @@ export class UnixTimestampDateTimeAdapter extends DateTimeAdapter<number> {
     }
 
     /**
-     * Picker expects:
-     * 0 - January
-     * 11 - December
+     * Компонент выбора даты ожидает:
+     * 0 - январь
+     * 11 - декабрь
      *
-     * Luxon uses:
-     * 1 - January
-     * 12 - December
+     * Luxon использует:
+     * 1 - январь
+     * 12 - декабрь
      */
     public getMonth(date: number): number {
         return this.fromTimestamp(date).month - 1;
     }
 
     /**
-     * Picker expects:
-     * 0 - Sunday
-     * 6 - Saturday
+     * Компонент выбора даты ожидает:
+     * 0 - воскресенье
+     * 6 - суббота
      *
-     * Luxon weekday:
-     * 1 - Monday
-     * 7 - Sunday
+     * День недели в Luxon:
+     * 1 - понедельник
+     * 7 - воскресенье
      */
     public getDay(date: number): number {
         return this.fromTimestamp(date).weekday % 7;
@@ -110,8 +107,8 @@ export class UnixTimestampDateTimeAdapter extends DateTimeAdapter<number> {
     public getDayOfWeekNames(style: 'long' | 'short' | 'narrow'): string[] {
         const weekdays = Info.weekdays(style, { locale: this.locale });
 
-        // Luxon returns Monday..Sunday.
-        // Existing picker expects Sunday..Saturday.
+        // Luxon возвращает дни недели от понедельника до воскресенья
+        // Компонент выбора даты ожидает порядок от воскресенья до субботы
         return [
             weekdays[6],
             ...weekdays.slice(0, 6),
@@ -146,7 +143,7 @@ export class UnixTimestampDateTimeAdapter extends DateTimeAdapter<number> {
     }
 
     public isValid(date: number): boolean {
-        return typeof date === 'number' && !Number.isNaN(date);
+        return typeof date === 'number' && Number.isFinite(date) && this.fromTimestamp(date).isValid;
     }
 
     public invalid(): number {
@@ -201,6 +198,10 @@ export class UnixTimestampDateTimeAdapter extends DateTimeAdapter<number> {
         minutes = 0,
         seconds = 0,
     ): number {
+        if (hours < 0 || hours > 23) {
+            throw Error(`UnixTimestampDateTimeAdapter: Invalid hours "${hours}". Hours must be between 0 and 23.`);
+        }
+
         const result = DateTime.local(
             year,
             month + 1,
@@ -231,9 +232,9 @@ export class UnixTimestampDateTimeAdapter extends DateTimeAdapter<number> {
     }
 
     /**
-     * Hybrid formatter:
-     * - string => Luxon format, e.g. 'dd.MM.yyyy HH:mm'
-     * - Intl.DateTimeFormatOptions => old adapter-compatible formatting
+     * Форматирование с поддержкой двух видов формата:
+     * - string => формат Luxon, например 'dd.MM.yyyy HH:mm'
+     * - Intl.DateTimeFormatOptions => форматирование, совместимое с прежним адаптером
      */
     public format(
         date: number,

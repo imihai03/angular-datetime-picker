@@ -2,16 +2,7 @@
  * dialog.service
  */
 
-import {
-    ComponentRef,
-    Inject,
-    Injectable,
-    InjectionToken,
-    Injector,
-    Optional,
-    SkipSelf,
-    TemplateRef
-} from '@angular/core';
+import { ComponentRef, Inject, Injectable, InjectionToken, Injector, Optional, SkipSelf, TemplateRef } from '@angular/core';
 import { Location } from '@angular/common';
 import { OwlDialogConfig, OwlDialogConfigInterface } from './dialog-config.class';
 import { OwlDialogRef } from './dialog-ref.class';
@@ -19,22 +10,13 @@ import { OwlDialogContainerComponent } from './dialog-container.component';
 import { extendObject } from '../utils';
 import { defer, Observable, Subject } from 'rxjs';
 import { startWith } from 'rxjs/operators';
-import {
-    Overlay,
-    OverlayConfig,
-    OverlayContainer,
-    OverlayRef,
-    ScrollStrategy
-} from '@angular/cdk/overlay';
-import {
-    ComponentPortal,
-    ComponentType,
-} from '@angular/cdk/portal';
+import { Overlay, OverlayConfig, OverlayContainer, OverlayRef, ScrollStrategy } from '@angular/cdk/overlay';
+import { ComponentPortal, ComponentType } from '@angular/cdk/portal';
 
 export const OWL_DIALOG_DATA = new InjectionToken<any>('OwlDialogData');
 
 /**
- * Injection token that determines the scroll handling while the dialog is open.
+ * Токен DI, определяющий обработку прокрутки при открытом диалоговом окне
  * */
 export const OWL_DIALOG_SCROLL_STRATEGY = new InjectionToken<
     () => ScrollStrategy
@@ -55,7 +37,7 @@ export const OWL_DIALOG_SCROLL_STRATEGY_PROVIDER = {
 };
 
 /**
- * Injection token that can be used to specify default dialog options.
+ * Токен DI для задания параметров диалогового окна по умолчанию
  * */
 export const OWL_DIALOG_DEFAULT_OPTIONS = new InjectionToken<OwlDialogConfig>(
     'owl-dialog-default-options'
@@ -63,28 +45,39 @@ export const OWL_DIALOG_DEFAULT_OPTIONS = new InjectionToken<OwlDialogConfig>(
 
 @Injectable()
 export class OwlDialogService {
-    private ariaHiddenElements = new Map<Element, string | null>();
+    /**
+     * Поток событий завершения закрытия всех диалоговых окон
+     * Если открытых окон нет, событие отправляется сразу при подписке
+     */
+
+    afterAllClosed: Observable<{}> = defer(
+        () =>
+            this.openDialogs.length
+                ? this._afterAllClosed
+                : this._afterAllClosed.pipe(startWith(undefined))
+    );
+    private readonly _ariaHiddenElements = new Map<Element, string | null>();
 
     private _openDialogsAtThisLevel: OwlDialogRef<any>[] = [];
     private _beforeOpenAtThisLevel = new Subject<OwlDialogRef<any>>();
     private _afterOpenAtThisLevel = new Subject<OwlDialogRef<any>>();
     private _afterAllClosedAtThisLevel = new Subject<void>();
 
-    /** Keeps track of the currently-open dialogs. */
+    /** Хранит текущие открытые диалоговые окна */
     get openDialogs(): OwlDialogRef<any>[] {
         return this.parentDialog
             ? this.parentDialog.openDialogs
             : this._openDialogsAtThisLevel;
     }
 
-    /** Stream that emits when a dialog has been opened. */
+    /** Поток событий открытия диалогового окна */
     get beforeOpen(): Subject<OwlDialogRef<any>> {
         return this.parentDialog
             ? this.parentDialog.beforeOpen
             : this._beforeOpenAtThisLevel;
     }
 
-    /** Stream that emits when a dialog has been opened. */
+    /** Поток событий открытия диалогового окна */
     get afterOpen(): Subject<OwlDialogRef<any>> {
         return this.parentDialog
             ? this.parentDialog.afterOpen
@@ -98,17 +91,9 @@ export class OwlDialogService {
             : this._afterAllClosedAtThisLevel;
     }
 
-    /**
-     * Stream that emits when all open dialog have finished closing.
-     * Will emit on subscribe if there are no open dialogs to begin with.
-     */
-
-    afterAllClosed: Observable<{}> = defer(
-        () =>
-            this._openDialogsAtThisLevel.length
-                ? this._afterAllClosed
-                : this._afterAllClosed.pipe(startWith(undefined))
-    );
+    private get ariaHiddenElements(): Map<Element, string | null> {
+        return this.parentDialog ? this.parentDialog.ariaHiddenElements : this._ariaHiddenElements;
+    }
 
     private readonly scrollStrategy: () => ScrollStrategy;
 
@@ -126,9 +111,6 @@ export class OwlDialogService {
         private overlayContainer: OverlayContainer
     ) {
         this.scrollStrategy = scrollStrategy;
-        if (!parentDialog && location) {
-            location.subscribe(() => this.closeAll());
-        }
     }
 
     public open<T>(
@@ -168,7 +150,7 @@ export class OwlDialogService {
     }
 
     /**
-     * Closes all of the currently-open dialogs.
+     * Закрывает все открытые диалоговые окна
      */
     public closeAll(): void {
         let i = this.openDialogs.length;
@@ -179,8 +161,8 @@ export class OwlDialogService {
     }
 
     /**
-     * Finds an open dialog by its id.
-     * @param id ID to use when looking up the dialog.
+     * Находит открытое диалоговое окно по ID
+     * @param id ID искомого диалогового окна
      */
     public getDialogById(id: string): OwlDialogRef<any> | undefined {
         return this.openDialogs.find(dialog => dialog.id === id);
@@ -288,12 +270,12 @@ export class OwlDialogService {
     }
 
     private removeOpenDialog(dialogRef: OwlDialogRef<any>): void {
-        const index = this._openDialogsAtThisLevel.indexOf(dialogRef);
+        const index = this.openDialogs.indexOf(dialogRef);
 
         if (index > -1) {
             this.openDialogs.splice(index, 1);
-            // If all the dialogs were closed, remove/restore the `aria-hidden`
-            // to a the siblings and emit to the `afterAllClosed` stream.
+            // Если все диалоговые окна закрыты, удаляем или восстанавливаем `aria-hidden`
+            // у соседних элементов и отправляем событие в поток `afterAllClosed`
             if (!this.openDialogs.length) {
                 this.ariaHiddenElements.forEach((previousValue, element) => {
                     if (previousValue) {
@@ -310,12 +292,12 @@ export class OwlDialogService {
     }
 
     /**
-     * Hides all of the content that isn't an overlay from assistive technology.
+     * Скрывает от вспомогательных технологий всё содержимое за пределами overlay
      */
     private hideNonDialogContentFromAssistiveTechnology() {
         const overlayContainer = this.overlayContainer.getContainerElement();
 
-        // Ensure that the overlay container is attached to the DOM.
+        // Проверяем, что контейнер overlay подключён к DOM
         if (overlayContainer.parentElement) {
             const siblings = overlayContainer.parentElement.children;
 
@@ -340,14 +322,14 @@ export class OwlDialogService {
 }
 
 /**
- * Applies default options to the dialog config.
- * @param config Config to be modified.
- * @param defaultOptions Default config setting
- * @returns The new configuration object.
+ * Применяет параметры по умолчанию к конфигурации диалогового окна
+ * @param config Изменяемая конфигурация
+ * @param defaultOptions Параметры конфигурации по умолчанию
+ * @returns Новый объект конфигурации
  */
 function applyConfigDefaults(
     config?: OwlDialogConfigInterface,
     defaultOptions?: OwlDialogConfigInterface
 ): OwlDialogConfig {
-    return extendObject(new OwlDialogConfig(), config, defaultOptions);
+    return extendObject(new OwlDialogConfig(), defaultOptions, config);
 }

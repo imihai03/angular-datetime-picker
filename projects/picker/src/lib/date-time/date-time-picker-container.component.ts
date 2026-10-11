@@ -2,19 +2,7 @@
  * date-time-picker-container.component
  */
 
-import {
-    AfterContentInit,
-    AfterViewInit,
-    AnimationCallbackEvent,
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    EventEmitter,
-    OnInit,
-    Optional,
-    ViewChild,
-} from '@angular/core';
+import { AfterContentInit, AfterViewInit, AnimationCallbackEvent, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, OnInit, Optional, ViewChild } from '@angular/core';
 import { OwlDateTimeIntl } from './date-time-picker-intl.service';
 import { OwlCalendarComponent } from './calendar.component';
 import { IDateTimePickerAnimationEvent } from './date-time-picker-animation-event';
@@ -22,13 +10,8 @@ import { OwlTimerComponent } from './timer.component';
 import { DateTimeAdapter } from './adapter/date-time-adapter.class';
 import { OwlDateTime, PickerType } from './date-time.class';
 import { Observable, Subject } from 'rxjs';
-import {
-    DOWN_ARROW,
-    LEFT_ARROW,
-    RIGHT_ARROW,
-    SPACE,
-    UP_ARROW,
-} from '@angular/cdk/keycodes';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DOWN_ARROW, LEFT_ARROW, RIGHT_ARROW, SPACE, UP_ARROW } from '@angular/cdk/keycodes';
 
 @Component({
     exportAs: 'owlDateTimeContainer',
@@ -58,17 +41,17 @@ export class OwlDateTimeContainerComponent<T>
     timer: OwlTimerComponent<T>;
 
     public picker: OwlDateTime<T>;
-    public activeSelectedIndex = 0; // The current active SelectedIndex in range select mode (0: 'from', 1: 'to')
+    public activeSelectedIndex = 0; // Индекс активной границы диапазона (0: 'from', 1: 'to')
 
-    /** Emits when an animation state changes. */
+    /** Событие изменения состояния анимации */
     public animationStateChanged = new EventEmitter<IDateTimePickerAnimationEvent>();
 
-    // retain start and end time
+    // Сохраняем время начала и конца диапазона
     private retainStartTime: T;
     private retainEndTime: T;
 
     /**
-     * Stream emits when try to hide picker
+     * Поток запросов на закрытие компонента выбора
      * */
     private hidePicker$ = new Subject<any>();
 
@@ -77,7 +60,7 @@ export class OwlDateTimeContainerComponent<T>
     }
 
     /**
-     * Stream emits when try to confirm the selected value
+     * Поток запросов на подтверждение выбранного значения
      * */
     private confirmSelected$ = new Subject<any>();
 
@@ -98,8 +81,8 @@ export class OwlDateTimeContainerComponent<T>
     }
 
     /**
-     * The current picker value. This determines which time period is shown and which date is
-     * highlighted when using keyboard navigation.
+     * Текущее значение компонента выбора определяет отображаемый период и дату,
+     * выделенную при навигации с клавиатуры
      */
     private _clampedPickerDateTime: T;
 
@@ -107,15 +90,14 @@ export class OwlDateTimeContainerComponent<T>
         return this._clampedPickerDateTime;
     }
 
-    set pickerDateTime(value: T) {
-        if (value) {
-            this._clampedPickerDateTime = this.dateTimeAdapter.clampDate(
-                value,
-                this.picker.minDateTime,
-                this.picker.maxDateTime,
-            );
-        }
-        this.cdRef.markForCheck();
+    constructor(
+        private cdRef: ChangeDetectorRef,
+        private elmRef: ElementRef,
+        private pickerIntl: OwlDateTimeIntl,
+        @Optional() private dateTimeAdapter: DateTimeAdapter<T>,
+    ) {
+        this.pickerIntl.changes.pipe(takeUntilDestroyed())
+            .subscribe(() => this.cdRef.markForCheck());
     }
 
     get pickerType(): PickerType {
@@ -130,51 +112,49 @@ export class OwlDateTimeContainerComponent<T>
         return this.pickerIntl.setBtnLabel;
     }
 
+    set pickerDateTime(value: T) {
+        if (value != null) {
+            this._clampedPickerDateTime = this.dateTimeAdapter.clampDate(
+                value,
+                this.picker.minDateTime,
+                this.picker.maxDateTime,
+            );
+        }
+        this.cdRef.markForCheck();
+    }
+
     /**
-     * The range 'from' label
+     * Подпись начала диапазона ('from')
      * */
     get fromLabel(): string {
         return this.pickerIntl.rangeFromLabel;
     }
 
     /**
-     * The range 'to' label
+     * Подпись конца диапазона ('to')
      * */
     get toLabel(): string {
         return this.pickerIntl.rangeToLabel;
     }
 
     /**
-     * The range 'from' formatted value
+     * Отформатированное значение начала диапазона ('from')
      * */
     get fromFormattedValue(): string {
         const value = this.picker.selecteds[0];
-        return value
+        return value != null
             ? this.dateTimeAdapter.format(value, this.picker.formatString)
             : '';
     }
 
     /**
-     * The range 'to' formatted value
+     * Отформатированное значение конца диапазона ('to')
      * */
     get toFormattedValue(): string {
         const value = this.picker.selecteds[1];
-        return value
+        return value != null
             ? this.dateTimeAdapter.format(value, this.picker.formatString)
             : '';
-    }
-
-    /**
-     * Cases in which the control buttons show in the picker
-     * 1) picker mode is 'dialog'
-     * 2) picker type is NOT 'calendar' and the picker mode is NOT 'inline'
-     * */
-    get showControlButtons(): boolean {
-        return (
-            this.picker.pickerMode === 'dialog' ||
-            (this.picker.pickerType !== 'calendar' &&
-                this.picker.pickerMode !== 'inline')
-        );
     }
 
     get containerElm(): HTMLElement {
@@ -209,21 +189,31 @@ export class OwlDateTimeContainerComponent<T>
         return this.picker.pickerMode === 'inline' ? '' : 'enter';
     }
 
-    constructor(
-        private cdRef: ChangeDetectorRef,
-        private elmRef: ElementRef,
-        private pickerIntl: OwlDateTimeIntl,
-        @Optional() private dateTimeAdapter: DateTimeAdapter<T>,
-    ) {}
+    /**
+     * Условия отображения кнопок управления:
+     * 1) Режим компонента — 'dialog'
+     * 2) Тип компонента отличается от 'calendar', а режим — от 'inline'
+     * */
+    get showControlButtons(): boolean {
+        return (
+            this.picker.pickerMode === 'dialog' ||
+            (this.picker.pickerType !== 'calendar' &&
+                this.picker.pickerMode !== 'inline')
+        );
+    }
+
+    public refreshView(): void {
+        this.cdRef.markForCheck();
+    }
 
     public ngOnInit() {
         if (this.picker.selectMode === 'range') {
-            if (this.picker.selecteds[0]) {
+            if (this.picker.selecteds[0] != null) {
                 this.retainStartTime = this.dateTimeAdapter.clone(
                     this.picker.selecteds[0],
                 );
             }
-            if (this.picker.selecteds[1]) {
+            if (this.picker.selecteds[1] != null) {
                 this.retainEndTime = this.dateTimeAdapter.clone(
                     this.picker.selecteds[1],
                 );
@@ -260,15 +250,18 @@ export class OwlDateTimeContainerComponent<T>
     }
 
     public dateSelected(date: T): void {
+        if (this.picker.disabled) {
+            return;
+        }
         let result;
 
         if (this.picker.isInSingleMode) {
             result = this.dateSelectedInSingleMode(date);
-            if (result) {
+            if (result != null) {
                 this.pickerDateTime = result;
                 this.picker.select(result);
             } else {
-                // we close the picker when result is null and pickerType is calendar.
+                // Закрываем компонент выбора, если result равен null и pickerType равен 'calendar'
                 if (this.pickerType === 'calendar') {
                     this.hidePicker$.next(null);
                 }
@@ -278,7 +271,7 @@ export class OwlDateTimeContainerComponent<T>
 
         if (this.picker.isInRangeMode) {
             result = this.dateSelectedInRangeMode(date);
-            if (result) {
+            if (result != null) {
                 this.pickerDateTime = result[this.activeSelectedIndex];
                 this.picker.select(result);
             }
@@ -286,6 +279,9 @@ export class OwlDateTimeContainerComponent<T>
     }
 
     public timeSelected(time: T): void {
+        if (this.picker.disabled) {
+            return;
+        }
         this.pickerDateTime = this.dateTimeAdapter.clone(time);
 
         if (!this.picker.dateTimeChecker(this.pickerDateTime)) {
@@ -300,17 +296,17 @@ export class OwlDateTimeContainerComponent<T>
         if (this.picker.isInRangeMode) {
             const selecteds = [...this.picker.selecteds];
 
-            // check if the 'from' is after 'to' or 'to'is before 'from'
-            // In this case, we set both the 'from' and 'to' the same value
+            // Проверяем, находится ли начало диапазона после конца или конец перед началом
+            // В этом случае задаём обеим границам диапазона одинаковое значение
             if (
                 (this.activeSelectedIndex === 0 &&
-                    selecteds[1] &&
+                    selecteds[1] != null &&
                     this.dateTimeAdapter.compare(
                         this.pickerDateTime,
                         selecteds[1],
                     ) === 1) ||
                 (this.activeSelectedIndex === 1 &&
-                    selecteds[0] &&
+                    selecteds[0] != null &&
                     this.dateTimeAdapter.compare(
                         this.pickerDateTime,
                         selecteds[0],
@@ -322,10 +318,10 @@ export class OwlDateTimeContainerComponent<T>
                 selecteds[this.activeSelectedIndex] = this.pickerDateTime;
             }
 
-            if (selecteds[0]) {
+            if (selecteds[0] != null) {
                 this.retainStartTime = this.dateTimeAdapter.clone(selecteds[0]);
             }
-            if (selecteds[1]) {
+            if (selecteds[1] != null) {
                 this.retainEndTime = this.dateTimeAdapter.clone(selecteds[1]);
             }
             this.picker.select(selecteds);
@@ -333,7 +329,7 @@ export class OwlDateTimeContainerComponent<T>
     }
 
     /**
-     * Handle click on cancel button
+     * Обрабатывает нажатие кнопки отмены
      */
     public onCancelClicked(event: any): void {
         this.hidePicker$.next(null);
@@ -342,9 +338,13 @@ export class OwlDateTimeContainerComponent<T>
     }
 
     /**
-     * Handle click on set button
+     * Обрабатывает нажатие кнопки подтверждения
      */
     public onSetClicked(event: any): void {
+        if (this.picker.disabled) {
+            event.preventDefault();
+            return;
+        }
         if (!this.picker.dateTimeChecker(this.pickerDateTime)) {
             this.hidePicker$.next(null);
             event.preventDefault();
@@ -357,7 +357,7 @@ export class OwlDateTimeContainerComponent<T>
     }
 
     /**
-     * Handle click on inform radio group
+     * Обрабатывает выбор границы диапазона в группе переключателей
      */
     public handleClickOnInfoGroup(event: any, index: number): void {
         this.setActiveSelectedIndex(index);
@@ -366,7 +366,7 @@ export class OwlDateTimeContainerComponent<T>
     }
 
     /**
-     * Handle click on inform radio group
+     * Обрабатывает выбор границы диапазона в группе переключателей
      */
     public handleKeydownOnInfoGroup(
         event: any,
@@ -410,10 +410,11 @@ export class OwlDateTimeContainerComponent<T>
                 easing: 'cubic-bezier(0.25, 0.8, 0.25, 1)',
                 fill: 'forwards'
             });
-            animation.finished.then(() => {
+            const complete = () => {
                 this.handleContainerAnimationDone('enter');
                 event.animationComplete();
-            });
+            };
+            animation.finished.then(complete, complete);
         }
     }
 
@@ -424,22 +425,24 @@ export class OwlDateTimeContainerComponent<T>
             this.handleContainerAnimationDone('leave');
             event.animationComplete();
         } else {
-            event.target.animate([
+            const animation = event.target.animate([
                 { opacity: 1 },
                 { opacity: 0 }
             ], {
                 duration: duration ?? 100,
                 easing: 'linear',
                 fill: 'forwards'
-            }).finished.then(() => {
+            });
+            const complete = () => {
                 this.handleContainerAnimationDone('leave');
                 event.animationComplete();
-            });
+            };
+            animation.finished.then(complete, complete);
         }
     }
 
     /**
-     * Set the value of activeSelectedIndex
+     * Задаёт значение activeSelectedIndex
      */
     private setActiveSelectedIndex(index: number): void {
         if (
@@ -449,7 +452,7 @@ export class OwlDateTimeContainerComponent<T>
             this.activeSelectedIndex = index;
 
             const selected = this.picker.selecteds[this.activeSelectedIndex];
-            if (this.picker.selecteds && selected) {
+            if (this.picker.selecteds && selected != null) {
                 this.pickerDateTime = this.dateTimeAdapter.clone(selected);
             }
         }
@@ -457,13 +460,13 @@ export class OwlDateTimeContainerComponent<T>
     }
 
     private initPicker(): void {
-        this.pickerDateTime = this.picker.startAt || this.dateTimeAdapter.now();
+        this.pickerDateTime = this.picker.startAt ?? this.dateTimeAdapter.now();
         this.activeSelectedIndex = this.picker.selectMode === 'rangeTo' ? 1 : 0;
     }
 
     /**
-     * Select calendar date in single mode,
-     * it returns null when date is not selected.
+     * Выбирает дату календаря в режиме single
+     * Возвращает null, если дата не выбрана
      */
     private dateSelectedInSingleMode(date: T): T | null {
         if (this.dateTimeAdapter.isSameDay(date, this.picker.selected)) {
@@ -474,7 +477,7 @@ export class OwlDateTimeContainerComponent<T>
     }
 
     /**
-     * Select dates in range Mode
+     * Выбирает даты в режиме диапазона
      */
     private dateSelectedInRangeMode(date: T): T[] | null {
         let from = this.picker.selecteds[0];
@@ -482,22 +485,22 @@ export class OwlDateTimeContainerComponent<T>
 
         const result = this.updateAndCheckCalendarDate(date);
 
-        if (!result) {
+        if (result == null) {
             return null;
         }
 
-        // if the given calendar day is after or equal to 'from',
-        // set ths given date as 'to'
-        // otherwise, set it as 'from' and set 'to' to null
+        // Если указанный день совпадает с началом диапазона или находится после него,
+        // задаём его как конец диапазона ('to')
+        // Иначе задаём его как начало диапазона ('from'), а конец ('to') сбрасываем в null
         if (this.picker.selectMode === 'range') {
             if (
                 this.picker.selecteds &&
                 this.picker.selecteds.length &&
-                !to &&
-                from &&
+                to == null &&
+                from != null &&
                 this.dateTimeAdapter.differenceInCalendarDays(result, from) >= 0
             ) {
-                if (this.picker.endAt && !this.retainEndTime) {
+                if (this.picker.endAt != null && this.retainEndTime == null) {
                     to = this.dateTimeAdapter.createDate(
                         this.dateTimeAdapter.getYear(result),
                         this.dateTimeAdapter.getMonth(result),
@@ -506,7 +509,7 @@ export class OwlDateTimeContainerComponent<T>
                         this.dateTimeAdapter.getMinutes(this.picker.endAt),
                         this.dateTimeAdapter.getSeconds(this.picker.endAt),
                     );
-                } else if (this.retainEndTime) {
+                } else if (this.retainEndTime != null) {
                     to = this.dateTimeAdapter.createDate(
                         this.dateTimeAdapter.getYear(result),
                         this.dateTimeAdapter.getMonth(result),
@@ -520,7 +523,7 @@ export class OwlDateTimeContainerComponent<T>
                 }
                 this.activeSelectedIndex = 1;
             } else {
-                if (this.picker.startAt && !this.retainStartTime) {
+                if (this.picker.startAt != null && this.retainStartTime == null) {
                     from = this.dateTimeAdapter.createDate(
                         this.dateTimeAdapter.getYear(result),
                         this.dateTimeAdapter.getMonth(result),
@@ -529,7 +532,7 @@ export class OwlDateTimeContainerComponent<T>
                         this.dateTimeAdapter.getMinutes(this.picker.startAt),
                         this.dateTimeAdapter.getSeconds(this.picker.startAt),
                     );
-                } else if (this.retainStartTime) {
+                } else if (this.retainStartTime != null) {
                     from = this.dateTimeAdapter.createDate(
                         this.dateTimeAdapter.getYear(result),
                         this.dateTimeAdapter.getMonth(result),
@@ -547,33 +550,47 @@ export class OwlDateTimeContainerComponent<T>
         } else if (this.picker.selectMode === 'rangeFrom') {
             from = result;
 
-            // if the from value is after the to value, set the to value as null
-            if (to && this.dateTimeAdapter.compare(from, to) > 0) {
+            // Если начало диапазона находится после конца, сбрасываем конец в null
+            if (to != null && this.dateTimeAdapter.compare(from, to) > 0) {
                 to = null;
             }
         } else if (this.picker.selectMode === 'rangeTo') {
             to = result;
 
-            // if the from value is after the to value, set the from value as null
-            if (from && this.dateTimeAdapter.compare(from, to) > 0) {
+            // Если начало диапазона находится после конца, сбрасываем начало в null
+            if (from != null && this.dateTimeAdapter.compare(from, to) > 0) {
                 from = null;
             }
         }
 
+        // Сохранённое время может выходить за min/max, даже если день доступен для выбора
+        const selected = this.dateTimeAdapter.clampDate(
+            this.activeSelectedIndex === 0 ? from : to,
+            this.picker.minDateTime,
+            this.picker.maxDateTime
+        );
+        if (!this.picker.dateTimeChecker(selected)) {
+            return null;
+        }
+        if (this.activeSelectedIndex === 0) {
+            from = selected;
+        } else {
+            to = selected;
+        }
         return [from, to];
     }
 
     /**
-     * Update the given calendar date's time and check if it is valid
-     * Because the calendar date has 00:00:00 as default time, if the picker type is 'both',
-     * we need to update the given calendar date's time before selecting it.
-     * if it is valid, return the updated dateTime
-     * if it is not valid, return null
+     * Обновляет время указанной даты календаря и проверяет её допустимость
+     * Поскольку время даты календаря по умолчанию равно 00:00:00, в режиме 'both'
+     * перед выбором даты необходимо обновить её время
+     * Если дата допустима, возвращает обновлённое значение dateTime
+     * Если дата недопустима, возвращает null
      */
     private updateAndCheckCalendarDate(date: T): T {
         let result;
 
-        // if the picker is 'both', update the calendar date's time value
+        // В режиме 'both' обновляем время даты календаря
         if (this.picker.pickerType === 'both') {
             result = this.dateTimeAdapter.createDate(
                 this.dateTimeAdapter.getYear(date),
@@ -592,12 +609,12 @@ export class OwlDateTimeContainerComponent<T>
             result = this.dateTimeAdapter.clone(date);
         }
 
-        // check the updated dateTime
+        // Проверяем обновлённое значение dateTime
         return this.picker.dateTimeChecker(result) ? result : null;
     }
 
     /**
-     * Focus to the picker
+     * Переводит фокус на компонент выбора
      * */
     private focusPicker(): void {
         if (this.picker.pickerMode === 'inline') {
@@ -614,7 +631,7 @@ export class OwlDateTimeContainerComponent<T>
     private parseCssVariableDuration(el: Element, cssVariableName: string) {
         const durationStr = getComputedStyle(el).getPropertyValue(cssVariableName).trim();
 
-        // Convert to ms
+        // Переводим в миллисекунды
         let duration: number | undefined = undefined;
         if (durationStr.endsWith('ms')) {
             duration = parseFloat(durationStr);

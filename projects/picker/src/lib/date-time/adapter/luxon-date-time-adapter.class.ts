@@ -5,20 +5,17 @@
 import { Inject, Injectable, Optional } from '@angular/core';
 import { DateTime, Info, Settings } from 'luxon';
 
-import {
-    DateTimeAdapter,
-    OWL_DATE_TIME_LOCALE,
-} from './date-time-adapter.class';
+import { DateTimeAdapter, OWL_DATE_TIME_LOCALE } from './date-time-adapter.class';
 
 @Injectable()
 export class LuxonDateTimeAdapter extends DateTimeAdapter<DateTime> {
     public firstMonthOfTheYear = 0;
 
     /**
-     * 0 - Sunday
-     * 1 - Monday
+     * 0 - воскресенье
+     * 1 - понедельник
      * ...
-     * 6 - Saturday
+     * 6 - суббота
      */
     public firstDayOfTheWeek = 0;
 
@@ -37,26 +34,26 @@ export class LuxonDateTimeAdapter extends DateTimeAdapter<DateTime> {
     }
 
     /**
-     * Picker expects month index:
-     * 0 - January
-     * 11 - December
+     * Компонент выбора даты ожидает индекс месяца:
+     * 0 - январь
+     * 11 - декабрь
      *
-     * Luxon uses:
-     * 1 - January
-     * 12 - December
+     * Luxon использует:
+     * 1 - январь
+     * 12 - декабрь
      */
     public getMonth(date: DateTime): number {
         return date.month - 1;
     }
 
     /**
-     * Picker expects:
-     * 0 - Sunday
-     * 6 - Saturday
+     * Компонент выбора даты ожидает:
+     * 0 - воскресенье
+     * 6 - суббота
      *
-     * Luxon weekday:
-     * 1 - Monday
-     * 7 - Sunday
+     * День недели в Luxon:
+     * 1 - понедельник
+     * 7 - воскресенье
      */
     public getDay(date: DateTime): number {
         return date.weekday % 7;
@@ -89,11 +86,15 @@ export class LuxonDateTimeAdapter extends DateTimeAdapter<DateTime> {
     public differenceInCalendarDays(dateLeft: DateTime, dateRight: DateTime): number {
         if (this.isValid(dateLeft) && this.isValid(dateRight)) {
             return Math.round(
-                dateLeft.startOf('day').diff(dateRight.startOf('day'), 'days').days,
+                DateTime.utc(dateLeft.year, dateLeft.month, dateLeft.day)
+                    .diff(
+                        DateTime.utc(dateRight.year, dateRight.month, dateRight.day),
+                        'days'
+                    ).days
             );
         }
 
-        return null;
+        return Number.NaN;
     }
 
     public getYearName(date: DateTime): string {
@@ -107,8 +108,8 @@ export class LuxonDateTimeAdapter extends DateTimeAdapter<DateTime> {
     public getDayOfWeekNames(style: 'long' | 'short' | 'narrow'): string[] {
         const weekdays = Info.weekdays(style, { locale: this.locale });
 
-        // Luxon returns Monday..Sunday.
-        // Existing picker expects Sunday..Saturday.
+        // Luxon возвращает дни недели от понедельника до воскресенья
+        // Компонент выбора даты ожидает порядок от воскресенья до субботы
         return [
             weekdays[6],
             ...weekdays.slice(0, 6),
@@ -187,6 +188,10 @@ export class LuxonDateTimeAdapter extends DateTimeAdapter<DateTime> {
         minutes = 0,
         seconds = 0,
     ): DateTime {
+        if (hours < 0 || hours > 23) {
+            throw Error(`LuxonDateTimeAdapter: Invalid hours "${hours}". Hours must be between 0 and 23.`);
+        }
+
         const result = DateTime.local(
             year,
             month + 1,
@@ -225,7 +230,7 @@ export class LuxonDateTimeAdapter extends DateTimeAdapter<DateTime> {
         return date.setLocale(this.locale).toFormat(displayFormat);
     }
 
-    public parse(value: unknown, parseFormat: string | string[]): DateTime | null {
+    public parse(value: unknown, parseFormat: string | string[] | null): DateTime | null {
         if (value == null || value === '') {
             return null;
         }
@@ -250,7 +255,7 @@ export class LuxonDateTimeAdapter extends DateTimeAdapter<DateTime> {
             return this.invalid();
         }
 
-        const formats = Array.isArray(parseFormat) ? parseFormat : [parseFormat];
+        const formats = Array.isArray(parseFormat) ? parseFormat : parseFormat ? [parseFormat] : [];
 
         for (const format of formats) {
             const parsed = DateTime.fromFormat(value, format, {

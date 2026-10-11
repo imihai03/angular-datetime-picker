@@ -1,7 +1,7 @@
+import { ChangeDetectionStrategy, Component, DebugElement, provideZoneChangeDetection } from '@angular/core';
 /**
  * calendar-month-view.component.spec
  */
-
 import { DateTime } from 'luxon';
 import { registerLocaleData } from '@angular/common';
 import localeDutch from '@angular/common/locales/nl';
@@ -11,23 +11,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OwlDateTimeIntl } from './date-time-picker-intl.service';
 import { OwlLuxonDateTimeModule } from './adapter/luxon-date-time.module';
 import { OwlDateTimeModule } from './date-time.module';
-import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import {
-    createTestDateTime,
-    dispatchKeyboardEvent
-} from '../../test-helpers';
-import {
-    DOWN_ARROW,
-    END,
-    ENTER,
-    HOME,
-    LEFT_ARROW,
-    PAGE_DOWN,
-    PAGE_UP,
-    RIGHT_ARROW,
-    UP_ARROW
-} from '@angular/cdk/keycodes';
+import { createTestDateTime, dispatchKeyboardEvent } from '../../test-helpers';
+import { DOWN_ARROW, END, ENTER, HOME, LEFT_ARROW, PAGE_DOWN, PAGE_UP, RIGHT_ARROW, UP_ARROW } from '@angular/cdk/keycodes';
 
 const JAN = 0,
     FEB = 1,
@@ -42,7 +28,7 @@ const JAN = 0,
     NOV = 10,
     DEC = 11;
 
-describe('OwlMonthViewComponent', () => {
+describe('Компонент OwlMonthViewComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [OwlLuxonDateTimeModule, OwlDateTimeModule],
@@ -50,11 +36,11 @@ describe('OwlMonthViewComponent', () => {
                 StandardMonthViewComponent,
                 MonthViewWithDateFilterComponent
             ],
-            providers: [OwlDateTimeIntl]
+            providers: [provideZoneChangeDetection(), OwlDateTimeIntl]
         }).compileComponents();
     });
 
-    describe('standard month view', () => {
+    describe('Стандартное представление месяца', () => {
         let fixture: ComponentFixture<StandardMonthViewComponent>;
         let testComponent: StandardMonthViewComponent;
         let monthViewDebugElement: DebugElement;
@@ -73,21 +59,21 @@ describe('OwlMonthViewComponent', () => {
             monthViewInstance = monthViewDebugElement.componentInstance;
         });
 
-        it('should have 42 calendar day cells', () => {
+        it('отображает 42 ячейки календарных дней', () => {
             const cellEls = monthViewElement.querySelectorAll(
                 '.owl-dt-calendar-cell'
             );
             expect(cellEls.length).toBe(42);
         });
 
-        it('should show selected date if in same month', () => {
+        it('отображает выбранную дату в текущем месяце', () => {
             const selectedEl = monthViewElement.querySelector(
                 '.owl-dt-calendar-cell-selected'
             );
             expect(selectedEl.innerHTML.trim()).toBe('10');
         });
 
-        it('should NOT show selected date if in different month', () => {
+        it('не отображает выбранную дату из другого месяца', () => {
             testComponent.selected = createTestDateTime(2018, MAR, 10);
             fixture.detectChanges();
             const selectedEl = monthViewElement.querySelector(
@@ -96,14 +82,14 @@ describe('OwlMonthViewComponent', () => {
             expect(selectedEl).toBeNull();
         });
 
-        it('should mark active date', () => {
+        it('отмечает активную дату', () => {
             const selectedElContent = monthViewElement.querySelector(
                 '.owl-dt-calendar-cell-active .owl-dt-calendar-cell-content'
             );
             expect(selectedElContent.innerHTML.trim()).toBe('5');
         });
 
-        it('should set Sunday as first day of week by default', () => {
+        it('по умолчанию начинает неделю с воскресенья', () => {
             expect(monthViewInstance.firstDayOfWeek).toBe(0);
             const weekdayCells = monthViewElement.querySelectorAll(
                 '.owl-dt-weekday'
@@ -111,7 +97,7 @@ describe('OwlMonthViewComponent', () => {
             expect(weekdayCells[0].getAttribute('aria-label')).toBe('Sunday');
         });
 
-        it('should set Monday as first day of week if firstDayOfWeek set to 1', () => {
+        it('начинает неделю с понедельника при firstDayOfWeek равном 1', () => {
             monthViewInstance.firstDayOfWeek = 1;
             fixture.detectChanges();
             const weekdayCells = monthViewElement.querySelectorAll(
@@ -120,7 +106,7 @@ describe('OwlMonthViewComponent', () => {
             expect(weekdayCells[0].getAttribute('aria-label')).toBe('Monday');
         });
 
-        it('should set Saturday as first day of week if firstDayOfWeek set to 6', () => {
+        it('начинает неделю с субботы при firstDayOfWeek равном 6', () => {
             monthViewInstance.firstDayOfWeek = 6;
             fixture.detectChanges();
             const weekdayCells = monthViewElement.querySelectorAll(
@@ -129,7 +115,7 @@ describe('OwlMonthViewComponent', () => {
             expect(weekdayCells[0].getAttribute('aria-label')).toBe('Saturday');
         });
 
-        it('should decrement date on left arrow press', () => {
+        it('переходит к предыдущей дате по ArrowLeft', () => {
             const calendarBodyEl = monthViewElement.querySelector(
                 '.owl-dt-calendar-body'
             );
@@ -146,7 +132,7 @@ describe('OwlMonthViewComponent', () => {
             expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2016, DEC, 31));
         });
 
-        it('should increment date on right arrow press', () => {
+        it('переходит к следующей дате по ArrowRight', () => {
             const calendarBodyEl = monthViewElement.querySelector(
                 '.owl-dt-calendar-body'
             );
@@ -161,7 +147,7 @@ describe('OwlMonthViewComponent', () => {
             expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 7));
         });
 
-        it('should go up a row on up arrow press', () => {
+        it('переходит на строку выше по ArrowUp', () => {
             const calendarBodyEl = monthViewElement.querySelector(
                 '.owl-dt-calendar-body'
             );
@@ -179,7 +165,7 @@ describe('OwlMonthViewComponent', () => {
             expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2016, DEC, 31));
         });
 
-        it('should go down a row on down arrow press', () => {
+        it('переходит на строку ниже по ArrowDown', () => {
             const calendarBodyEl = monthViewElement.querySelector(
                 '.owl-dt-calendar-body'
             );
@@ -194,7 +180,7 @@ describe('OwlMonthViewComponent', () => {
             expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 19));
         });
 
-        it('should go to beginning of the month on home press', () => {
+        it('переходит к началу месяца по Home', () => {
             monthViewInstance.pickerDateTime = createTestDateTime(2018, JAN, 7);
             fixture.detectChanges();
 
@@ -212,7 +198,7 @@ describe('OwlMonthViewComponent', () => {
             expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 1));
         });
 
-        it('should go to end of the month on end press', () => {
+        it('переходит к концу месяца по End', () => {
             monthViewInstance.pickerDateTime = createTestDateTime(2018, JAN, 7);
             fixture.detectChanges();
 
@@ -230,7 +216,7 @@ describe('OwlMonthViewComponent', () => {
             expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, JAN, 31));
         });
 
-        it('should go back one month on page up press', () => {
+        it('переходит на месяц назад по PageUp', () => {
             const calendarBodyEl = monthViewElement.querySelector(
                 '.owl-dt-calendar-body'
             );
@@ -245,7 +231,7 @@ describe('OwlMonthViewComponent', () => {
             expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2017, NOV, 5));
         });
 
-        it('should go forward one month on page down press', () => {
+        it('переходит на месяц вперёд по PageDown', () => {
             const calendarBodyEl = monthViewElement.querySelector(
                 '.owl-dt-calendar-body'
             );
@@ -260,7 +246,7 @@ describe('OwlMonthViewComponent', () => {
             expect(testComponent.pickerDateTime).toEqual(createTestDateTime(2018, MAR, 5));
         });
 
-        it('should select active date on enter', () => {
+        it('выбирает активную дату по Enter', () => {
             const calendarBodyEl = monthViewElement.querySelector(
                 '.owl-dt-calendar-body'
             );
@@ -276,7 +262,7 @@ describe('OwlMonthViewComponent', () => {
         });
     });
 
-    describe('month view with date filter', () => {
+    describe('Представление месяца с фильтром дат', () => {
         let fixture: ComponentFixture<MonthViewWithDateFilterComponent>;
         let monthViewNativeElement: Element;
 
@@ -290,12 +276,12 @@ describe('OwlMonthViewComponent', () => {
             monthViewNativeElement = monthViewDebugElement.nativeElement;
         });
 
-        it('should disable filtered dates', () => {
+        it('блокирует даты, исключённые фильтром', () => {
             const cellOne = monthViewNativeElement.querySelector(
-                '[aria-label="January 1, 2018"]'
+                '[aria-label="01.01.2018"]'
             );
             const cellTwo = monthViewNativeElement.querySelector(
-                '[aria-label="January 2, 2018"]'
+                '[aria-label="02.01.2018"]'
             );
             expect(cellOne.classList).toContain(
                 'owl-dt-calendar-cell-disabled'
@@ -307,7 +293,7 @@ describe('OwlMonthViewComponent', () => {
     });
 
 
-    describe('standard month view (locale tests)', () => {
+    describe('Стандартное представление месяца: локализация', () => {
         let fixture: ComponentFixture<StandardMonthViewComponent>;
         let adapter: DateTimeAdapter<unknown>;
         let monthViewDebugElement: DebugElement;
@@ -329,7 +315,7 @@ describe('OwlMonthViewComponent', () => {
             monthViewInstance = monthViewDebugElement.componentInstance;
         });
 
-        it('should derive the first day of the week based on the active locale', () => {
+        it('определяет первый день недели по текущей локали', () => {
             adapter.setLocale('nl-NL');
 
             fixture.detectChanges();
@@ -339,17 +325,20 @@ describe('OwlMonthViewComponent', () => {
             expect(weekdayCells[0].getAttribute('aria-label')).toBe('maandag');
         });
 
-        it('should fallback to Sunday as first day of the week when when locale data is missing', () => {
+        it('начинает неделю с воскресенья при отсутствии данных локали', () => {
             adapter.setLocale('unknown');
 
             fixture.detectChanges();
             const weekdayCells = monthViewElement.querySelectorAll(
                 '.owl-dt-weekday'
             );
-            expect(weekdayCells[0].getAttribute('aria-label')).toBe('Sunday');
+            expect(monthViewInstance.firstDayOfWeek)
+                .toBe(0);
+            expect(weekdayCells[0].getAttribute('aria-label'))
+                .toBe(adapter.getDayOfWeekNames('long')[0]);
         });
 
-        it('should update the default day of the week when locale changes', () => {
+        it('обновляет первый день недели по умолчанию при смене локали', () => {
             adapter.setLocale('nl-NL');
 
             fixture.detectChanges();
@@ -370,6 +359,7 @@ describe('OwlMonthViewComponent', () => {
 });
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Default,
     standalone: false,
     template: `
         <owl-date-time-month-view
@@ -383,6 +373,7 @@ class StandardMonthViewComponent {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Default,
     standalone: false,
     template: `
         <owl-date-time-month-view

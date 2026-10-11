@@ -16,7 +16,7 @@ export interface Options {
 }
 export class DefaultOptions {
     public static create(): Options {
-        // Always return new instance
+        // Всегда возвращаем новый экземпляр
         return {
             multiYear: {
                 yearRows: 7,

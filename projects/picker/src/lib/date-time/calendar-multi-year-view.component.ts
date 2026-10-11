@@ -2,34 +2,14 @@
  * calendar-multi-year-view.component
  */
 
-import {
-    AfterContentInit,
-    ChangeDetectionStrategy, ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Inject,
-    Input,
-    OnInit,
-    Optional,
-    Output,
-    ViewChild
-} from '@angular/core';
+import { AfterContentInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Inject, Input, OnInit, Optional, Output, ViewChild } from '@angular/core';
 import { DateTimeAdapter } from './adapter/date-time-adapter.class';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalendarCell, OwlCalendarBodyComponent } from './calendar-body.component';
 import { SelectMode } from './date-time.class';
-import {
-    DOWN_ARROW,
-    END,
-    ENTER,
-    HOME,
-    LEFT_ARROW,
-    PAGE_DOWN,
-    PAGE_UP,
-    RIGHT_ARROW,
-    UP_ARROW
-} from '@angular/cdk/keycodes';
+import { DOWN_ARROW, END, ENTER, HOME, LEFT_ARROW, PAGE_DOWN, PAGE_UP, RIGHT_ARROW, UP_ARROW } from '@angular/cdk/keycodes';
 import { OwlDateTimeIntl } from './date-time-picker-intl.service';
-import { OptionsTokens, Options } from './options-provider';
+import { Options, OptionsTokens } from './options-provider';
 
 @Component({
     selector: 'owl-date-time-multi-year-view',
@@ -47,9 +27,9 @@ import { OptionsTokens, Options } from './options-provider';
 export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
 
     /**
-     * The select mode of the picker;
+     * Обработчик выбора нового месяца
      * */
-    private _selectMode: SelectMode = 'single';
+    @Output() readonly change = new EventEmitter<T>();
     @Input()
     get selectMode(): SelectMode {
         return this._selectMode;
@@ -62,9 +42,10 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
             this.cdRef.markForCheck();
         }
     }
-
-    /** The currently selected date. */
-    private _selected: T | null;
+    /**
+     * Передаёт выбранный год, не изменяя выбранную дату
+     * */
+    @Output() readonly yearSelected = new EventEmitter<T>();
     @Input()
     get selected(): T | null {
         return this._selected;
@@ -85,36 +66,18 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
     get selecteds(): T[] {
         return this._selecteds;
     }
-
-    set selecteds( values: T[] ) {
-        this._selecteds = values.map(( v ) => {
-            v = this.dateTimeAdapter.deserialize(v);
-            return this.getValidDate(v);
-        });
-        this.setSelectedYears();
-    }
+    /** Событие активации любой даты */
+    @Output() readonly pickerDateTimeChange: EventEmitter<T> = new EventEmitter<T>();
 
     private _pickerDateTime: T | null;
     @Input()
     get pickerDateTime() {
         return this._pickerDateTime;
     }
-
-    set pickerDateTime( value: T ) {
-        const oldDateTime = this._pickerDateTime;
-        value = this.dateTimeAdapter.deserialize(value);
-        this._pickerDateTime = this.getValidDate(value) || this.dateTimeAdapter.now();
-
-        if (oldDateTime && this._pickerDateTime &&
-            !this.isSameYearList(oldDateTime, this._pickerDateTime)) {
-            this.generateYearList();
-        }
-    }
-
-    /**
-     * A function used to filter which dates are selectable
-     * */
-    private _dateFilter: ( date: T ) => boolean;
+    /** Событие выбора ячейки календаря клавишей Enter */
+    @Output() readonly keyboardEnter: EventEmitter<any> = new EventEmitter<any>();
+    /** Тело таблицы календаря */
+    @ViewChild(OwlCalendarBodyComponent, { static: true }) calendarBodyElm: OwlCalendarBodyComponent;
     @Input()
     get dateFilter() {
         return this._dateFilter;
@@ -126,9 +89,10 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
             this.generateYearList();
         }
     }
-
-    /** The minimum selectable date. */
-    private _minDate: T | null;
+    /**
+     * Режим выбора даты
+     * */
+    private _selectMode: SelectMode = 'single';
     @Input()
     get minDate(): T | null {
         return this._minDate;
@@ -141,9 +105,8 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
             this.generateYearList();
         }
     }
-
-    /** The maximum selectable date. */
-    private _maxDate: T | null;
+    /** Текущая выбранная дата */
+    private _selected: T | null;
     @Input()
     get maxDate(): T | null {
         return this._maxDate;
@@ -182,12 +145,10 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
         return this.selectMode === 'range' || this.selectMode === 'rangeFrom'
             || this.selectMode === 'rangeTo';
     }
-
-    get activeCell(): number {
-        if (this._pickerDateTime) {
-            return this.dateTimeAdapter.getYear(this._pickerDateTime) % (this.options.yearsPerRow * this.options.yearRows);
-        }
-    }
+    /**
+     * Функция, определяющая доступные для выбора даты
+     * */
+    private _dateFilter: ( date: T ) => boolean;
 
     get tableHeader(): string {
         if (this._years && this._years.length > 0) {
@@ -202,25 +163,43 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
     get nextButtonLabel(): string {
         return this.pickerIntl.nextMultiYearLabel;
     }
+    /** Минимальная доступная для выбора дата */
+    private _minDate: T | null;
+    /** Максимальная доступная для выбора дата */
+    private _maxDate: T | null;
 
-    /**
-     * Callback to invoke when a new month is selected
-     * */
-    @Output() readonly change = new EventEmitter<T>();
+    constructor( private cdRef: ChangeDetectorRef,
+                 private pickerIntl: OwlDateTimeIntl,
+                 @Optional() private dateTimeAdapter: DateTimeAdapter<T>,
+        @Inject(OptionsTokens.multiYear) public readonly options: Options['multiYear']
+    ) {
+        this.pickerIntl.changes.pipe(takeUntilDestroyed())
+            .subscribe(() => this.cdRef.markForCheck());
+        this.dateTimeAdapter.localeChanges.pipe(takeUntilDestroyed())
+            .subscribe(() => {
+                this.generateYearList();
+                this.cdRef.markForCheck();
+            });
+    }
 
-    /**
-     * Emits the selected year. This doesn't imply a change on the selected date
-     * */
-    @Output() readonly yearSelected = new EventEmitter<T>();
+    set selecteds( values: T[] ) {
+        this._selecteds = (values ?? []).map((v) => {
+            v = this.dateTimeAdapter.deserialize(v);
+            return this.getValidDate(v);
+        });
+        this.setSelectedYears();
+    }
 
-    /** Emits when any date is activated. */
-    @Output() readonly pickerDateTimeChange: EventEmitter<T> = new EventEmitter<T>();
+    set pickerDateTime( value: T ) {
+        const oldDateTime = this._pickerDateTime;
+        value = this.dateTimeAdapter.deserialize(value);
+        this._pickerDateTime = this.getValidDate(value) ?? this.dateTimeAdapter.now();
 
-    /** Emits when use keyboard enter to select a calendar cell */
-    @Output() readonly keyboardEnter: EventEmitter<any> = new EventEmitter<any>();
-
-    /** The body of calendar table */
-    @ViewChild(OwlCalendarBodyComponent, { static: true }) calendarBodyElm: OwlCalendarBodyComponent;
+        if (oldDateTime != null && this._pickerDateTime != null &&
+            !this.isSameYearList(oldDateTime, this._pickerDateTime)) {
+            this.generateYearList();
+        }
+    }
 
     get owlDTCalendarView(): boolean {
         return true;
@@ -230,10 +209,10 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
         return true;
     }
 
-    constructor( private cdRef: ChangeDetectorRef,
-                 private pickerIntl: OwlDateTimeIntl,
-                 @Optional() private dateTimeAdapter: DateTimeAdapter<T>,
-                 @Inject(OptionsTokens.multiYear) private options: any) {
+    get activeCell(): number {
+        if (this._pickerDateTime != null) {
+            return this.dateTimeAdapter.getYear(this._pickerDateTime) - this.getYearListStart(this._pickerDateTime);
+        }
     }
 
     public ngOnInit() {
@@ -246,10 +225,12 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
     }
 
     /**
-     * Handle a calendarCell selected
+     * Обрабатывает выбор ячейки календаря
      */
     public selectCalendarCell( cell: CalendarCell ): void {
-        this.selectYear(cell.value);
+        if (cell.enabled) {
+            this.selectYear(cell.value);
+        }
     }
 
     private selectYear( year: number ): void {
@@ -273,7 +254,7 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
     }
 
     /**
-     * Generate the previous year list
+     * Создаёт список предыдущих лет
      * */
     public prevYearList( event: any ): void {
         this._pickerDateTime = this.dateTimeAdapter.addCalendarYears(this.pickerDateTime, -1 * this.options.yearsPerRow * this.options.yearRows);
@@ -282,7 +263,7 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
     }
 
     /**
-     * Generate the next year list
+     * Создаёт список следующих лет
      * */
     public nextYearList( event: any ): void {
         this._pickerDateTime = this.dateTimeAdapter.addCalendarYears(this.pickerDateTime, this.options.yearsPerRow * this.options.yearRows);
@@ -291,10 +272,14 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
     }
 
     public generateYearList(): void {
+        if (this._pickerDateTime == null) {
+            return;
+        }
+
         this._years = [];
 
         const pickerDateTimeYear = this.dateTimeAdapter.getYear(this._pickerDateTime);
-        const offset = pickerDateTimeYear % (this.options.yearsPerRow * this.options.yearRows);
+        const offset = pickerDateTimeYear - this.getYearListStart(this._pickerDateTime);
 
         for (let i = 0; i < this.options.yearRows; i++) {
             const row = [];
@@ -312,75 +297,78 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
 
     }
 
-    /** Whether the previous period button is enabled. */
+    /** Доступна ли кнопка перехода к предыдущему периоду */
     public previousEnabled(): boolean {
-        if (!this.minDate) {
-            return true;
-        }
-        return !this.minDate || !this.isSameYearList(this._pickerDateTime, this.minDate);
+        return this.minDate == null || this.getYearListStart(this._pickerDateTime) >
+            this.getYearListStart(this.minDate);
     }
 
-    /** Whether the next period button is enabled. */
+    /** Доступна ли кнопка перехода к следующему периоду */
     public nextEnabled(): boolean {
-        return !this.maxDate || !this.isSameYearList(this._pickerDateTime, this.maxDate);
+        return this.maxDate == null || this.getYearListStart(this._pickerDateTime) <
+            this.getYearListStart(this.maxDate);
     }
 
     public handleCalendarKeydown( event: KeyboardEvent ): void {
         let dateTime;
         switch (event.keyCode) {
-            // minus 1 year
+            // На один год назад
             case LEFT_ARROW:
                 dateTime = this.dateTimeAdapter.addCalendarYears(this._pickerDateTime, -1);
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // add 1 year
+            // На один год вперёд
             case RIGHT_ARROW:
                 dateTime = this.dateTimeAdapter.addCalendarYears(this._pickerDateTime, 1);
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // minus 3 years
+            // На три года назад
             case UP_ARROW:
                 dateTime = this.dateTimeAdapter.addCalendarYears(this._pickerDateTime, -1 * this.options.yearsPerRow);
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // add 3 years
+            // На три года вперёд
             case DOWN_ARROW:
                 dateTime = this.dateTimeAdapter.addCalendarYears(this._pickerDateTime, this.options.yearsPerRow);
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // go to the first year of the year page
+            // К первому году на текущей странице
             case HOME:
                 dateTime = this.dateTimeAdapter.addCalendarYears(this._pickerDateTime,
-                    -this.dateTimeAdapter.getYear(this._pickerDateTime) % (this.options.yearsPerRow * this.options.yearRows));
+                    -this.activeCell
+                );
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // go to the last year of the year page
+            // К последнему году на текущей странице
             case END:
                 dateTime = this.dateTimeAdapter.addCalendarYears(this._pickerDateTime,
-                    (this.options.yearsPerRow * this.options.yearRows) - this.dateTimeAdapter.getYear(this._pickerDateTime) % (this.options.yearsPerRow * this.options.yearRows) - 1);
+                    (this.options.yearsPerRow * this.options.yearRows) - this.activeCell - 1
+                );
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // minus 1 year page (or 10 year pages)
+            // На одну страницу лет (или десять страниц) назад
             case PAGE_UP:
                 dateTime = this.dateTimeAdapter.addCalendarYears(this.pickerDateTime, event.altKey ? -10 * (this.options.yearsPerRow * this.options.yearRows) : -1 * (this.options.yearsPerRow * this.options.yearRows));
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
-            // add 1 year page (or 10 year pages)
+            // На одну страницу лет (или десять страниц) вперёд
             case PAGE_DOWN:
                 dateTime = this.dateTimeAdapter.addCalendarYears(this.pickerDateTime, event.altKey ? 10 * (this.options.yearsPerRow * this.options.yearRows) : (this.options.yearsPerRow * this.options.yearRows));
                 this.pickerDateTimeChange.emit(dateTime);
                 break;
 
             case ENTER:
-                this.selectYear(this.dateTimeAdapter.getYear(this._pickerDateTime));
-                this.keyboardEnter.emit();
+                if (this.isYearEnabled(this.dateTimeAdapter.getYear(this._pickerDateTime))) {
+                    this.selectYear(this.dateTimeAdapter.getYear(this._pickerDateTime));
+                    this.keyboardEnter.emit();
+                }
                 break;
 
             default:
@@ -392,7 +380,7 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
     }
 
     /**
-     * Creates an CalendarCell for the given year.
+     * Создаёт CalendarCell для указанного года
      */
     private createYearCell( year: number ): CalendarCell {
         const startDateOfYear = this.dateTimeAdapter.createDate(year, this.dateTimeAdapter.firstMonthOfTheYear, 1);
@@ -405,7 +393,7 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
 
         this._selectedYears = [];
 
-        if (this.isInSingleMode && this.selected) {
+        if (this.isInSingleMode && this.selected != null) {
             this._selectedYears[0] = this.dateTimeAdapter.getYear(this.selected);
         }
 
@@ -420,26 +408,28 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
         }
     }
 
-    /** Whether the given year is enabled. */
+    /** Доступен ли указанный год для выбора */
     private isYearEnabled( year: number ) {
-        // disable if the year is greater than maxDate lower than minDate
+        // Отключаем выбор года, если он позже maxDate или раньше minDate
         if (year === undefined || year === null ||
-            (this.maxDate && year > this.dateTimeAdapter.getYear(this.maxDate)) ||
-            (this.minDate && year < this.dateTimeAdapter.getYear(this.minDate))) {
+            (this.maxDate != null && year > this.dateTimeAdapter.getYear(this.maxDate)) ||
+            (this.minDate != null && year < this.dateTimeAdapter.getYear(this.minDate))) {
             return false;
         }
 
-        // enable if it reaches here and there's no filter defined
+        // Разрешаем выбор, если проверки пройдены и фильтр не задан
         if (!this.dateFilter) {
             return true;
         }
 
         const firstOfYear = this.dateTimeAdapter.createDate(year, this.dateTimeAdapter.firstMonthOfTheYear, 1);
 
-        // If any date in the year is enabled count the year as enabled.
+        // Считаем год доступным для выбора, если доступна хотя бы одна дата в нём
         for (let date = firstOfYear; this.dateTimeAdapter.getYear(date) === year;
              date = this.dateTimeAdapter.addCalendarDays(date, 1)) {
-            if (this.dateFilter(date)) {
+            if (this.dateFilter(date) &&
+                (this.minDate == null || this.dateTimeAdapter.compare(date, this.minDate) >= 0) &&
+                (this.maxDate == null || this.dateTimeAdapter.compare(date, this.maxDate) <= 0)) {
                 return true;
             }
         }
@@ -448,12 +438,16 @@ export class OwlMultiYearViewComponent<T> implements OnInit, AfterContentInit {
     }
 
     private isSameYearList( date1: T, date2: T ): boolean {
-        return Math.floor(this.dateTimeAdapter.getYear(date1) / (this.options.yearsPerRow * this.options.yearRows)) ===
-            Math.floor(this.dateTimeAdapter.getYear(date2) / (this.options.yearsPerRow * this.options.yearRows));
+        return this.getYearListStart(date1) === this.getYearListStart(date2);
+    }
+
+    private getYearListStart(date: T): number {
+        const yearsPerPage = this.options.yearsPerRow * this.options.yearRows;
+        return Math.floor(this.dateTimeAdapter.getYear(date) / yearsPerPage) * yearsPerPage;
     }
 
     /**
-     * Get a valid date object
+     * Возвращает корректный объект даты
      */
     private getValidDate( obj: any ): T | null {
         return (this.dateTimeAdapter.isDateInstance(obj) && this.dateTimeAdapter.isValid(obj)) ? obj : null;

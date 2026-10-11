@@ -1,44 +1,44 @@
-// We want overlays to always appear over user content, so set a baseline
-// very high z-index for the overlay container, which is where we create the new
-// stacking context for all overlays.
+// Чтобы overlay всегда отображался поверх пользовательского содержимого, задаём
+// контейнеру высокий базовый z-index, в нём создаётся новый
+// контекст наложения для всех overlay
 $cdk-z-index-overlay-container: 1000;
 $cdk-z-index-overlay: 1000;
 $cdk-z-index-overlay-backdrop: 1000;
 
-// Background color for all of the backdrops
+// Цвет фона для всех подложек
 $cdk-overlay-dark-backdrop-background: rgba(0, 0, 0, 0.288);
 
-// Default backdrop animation is based on the Material Design swift-ease-out.
+// Анимация фона по умолчанию основана на swift-ease-out из Material Design
 $backdrop-animation-duration: 400ms !default;
 $backdrop-animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1) !default;
 
 .cdk-overlay-container, .cdk-global-overlay-wrapper {
-  // Disable events from being captured on the overlay container.
+    // Отключаем перехват событий контейнером overlay
   pointer-events: none;
 
-  // The container should be the size of the viewport.
+    // Размер контейнера должен совпадать с областью просмотра
   top: 0;
   left: 0;
   height: 100%;
   width: 100%;
 }
 
-// The overlay-container is an invisible element which contains all individual overlays.
+// overlay-container — невидимый элемент, содержащий все отдельные overlay
 .cdk-overlay-container {
   position: fixed;
   z-index: $cdk-z-index-overlay-container;
 
   &:empty {
-    // Hide the element when it doesn't have any child nodes. This doesn't
-    // include overlays that have been detached, rather than disposed.
+      // Скрываем элемент, если у него нет дочерних узлов, это не касается
+      // overlay, которые были отсоединены, но ещё не уничтожены
     display: none;
   }
 }
 
-// We use an extra wrapper element in order to use make the overlay itself a flex item.
-// This makes centering the overlay easy without running into the subpixel rendering
-// problems tied to using `transform` and without interfering with the other position
-// strategies.
+// Дополнительная обёртка позволяет использовать сам overlay как flex-элемент
+// Это упрощает центрирование overlay, избегая проблем субпиксельной отрисовки,
+// связанных с `transform`, и не мешает другим стратегиям
+// позиционирования
 .cdk-global-overlay-wrapper {
   display: -webkit-box;
   display: flex;
@@ -46,17 +46,17 @@ $backdrop-animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1) !default;
   z-index: $cdk-z-index-overlay;
 }
 
-// A single overlay pane.
+// Отдельная панель overlay
 .cdk-overlay-pane {
-  // Note: it's important for this one to start off `absolute`,
-  // in order for us to be able to measure it correctly.
+    // Исходное позиционирование должно быть `absolute`,
+    // чтобы размеры можно было измерить корректно
   position: absolute;
   pointer-events: auto;
   box-sizing: border-box;
   z-index: $cdk-z-index-overlay;
 
-  // For connected-position overlays, we set `display: flex` in
-  // order to force `max-width` and `max-height` to take effect.
+    // Для overlay с привязанным положением задаём `display: flex`,
+    // чтобы действовали ограничения `max-width` и `max-height`
   display: -webkit-box;
   display: flex;
   max-width: 100%;
@@ -64,7 +64,7 @@ $backdrop-animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1) !default;
 }
 
 .cdk-overlay-backdrop {
-  // TODO(jelbourn): reuse sidenav fullscreen mixin.
+    // TODO(jelbourn): переиспользовать полноэкранный миксин sidenav
   position: absolute;
   top: 0;
   bottom: 0;
@@ -81,10 +81,10 @@ $backdrop-animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1) !default;
   &.cdk-overlay-backdrop-showing {
     opacity: 1;
 
-    // In high contrast mode the rgba background will become solid so we need to fall back
-    // to making it opaque using `opacity`. Note that we can't use the `cdk-high-contrast`
-    // mixin, because we can't normalize the import path to the _a11y.scss both for the
-    // source and when this file is distributed. See #10908.
+      // В режиме высокой контрастности фон rgba становится непрозрачным, поэтому
+      // регулируем прозрачность через `opacity`; миксин `cdk-high-contrast` здесь недоступен,
+      // поскольку нельзя унифицировать путь импорта _a11y.scss и для исходников,
+      // и для публикуемого файла, смотри #10908
     @media screen and (-ms-high-contrast: active) {
       opacity: 0.6;
     }
@@ -96,50 +96,50 @@ $backdrop-animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1) !default;
 }
 
 .cdk-overlay-transparent-backdrop {
-  // Note: as of Firefox 57, having the backdrop be `background: none` will prevent it from
-  // capturing the user's mouse scroll events. Since we also can't use something like
-  // `rgba(0, 0, 0, 0)`, we work around the inconsistency by not setting the background at
-  // all and using `opacity` to make the element transparent.
+    // Начиная с Firefox 57 значение `background: none` у подложки не позволяет ей
+    // перехватывать прокрутку мышью, а поскольку значение вроде
+    // `rgba(0, 0, 0, 0)` тоже не подходит, вообще не задаём фон,
+    // а прозрачность элемента регулируем через `opacity`
   &, &.cdk-overlay-backdrop-showing {
     opacity: 0;
   }
 }
 
-// Overlay parent element used with the connected position strategy. Used to constrain the
-// overlay element's size to fit within the viewport.
+// Родительский элемент overlay для стратегии привязанного положения, ограничивающий
+// размер overlay границами области просмотра
 .cdk-overlay-connected-position-bounding-box {
   position: absolute;
   z-index: $cdk-z-index-overlay;
 
-  // We use `display: flex` on this element exclusively for centering connected overlays.
-  // When *not* centering, a top/left/bottom/right will be set which overrides the normal
-  // flex layout.
+    // Используем `display: flex` на этом элементе только для центрирования привязанных overlay
+    // Без центрирования задаётся top/left/bottom/right, что переопределяет обычное
+    // размещение flex-элементов
   display: -webkit-box;
   display: flex;
 
-  // We use the `column` direction here to avoid some flexbox issues in Edge
-  // when using the "grow after open" options.
+    // Используем направление `column`, чтобы избежать проблем flexbox в Edge
+    // при включённой возможности увеличения после открытия
   -webkit-box-orient: vertical;
   -webkit-box-direction: normal;
           flex-direction: column;
 
-  // Add some dimensions so the element has an `innerText` which some people depend on in tests.
+    // Задаём размеры, чтобы у элемента появился `innerText`, используемый в некоторых тестах
   min-width: 1px;
   min-height: 1px;
 }
 
-// Used when disabling global scrolling.
+// Используется при отключении прокрутки всей страницы
 .cdk-global-scrollblock {
   position: fixed;
 
-  // Necessary for the content not to lose its width. Note that we're using 100%, instead of
-  // 100vw, because 100vw includes the width plus the scrollbar, whereas 100% is the width
-  // that the element had before we made it `fixed`.
+    // Сохраняет ширину содержимого, для этого используем 100% вместо
+    // 100vw: 100vw включает полосу прокрутки, а 100% соответствует ширине
+    // элемента до применения `fixed`
   width: 100%;
 
-  // Note: this will always add a scrollbar to whatever element it is on, which can
-  // potentially result in double scrollbars. It shouldn't be an issue, because we won't
-  // block scrolling on a page that doesn't have a scrollbar in the first place.
+    // Это всегда добавляет полосу прокрутки элементу, что может привести
+    // к появлению двух полос, но проблем быть не должно, поскольку прокрутка не блокируется
+    // на страницах, у которых изначально нет полосы прокрутки
   overflow-y: scroll;
 }
 
@@ -384,7 +384,7 @@ $theme-color: #3f51b5;
   }
   &.owl-calendar-weeks {
     .owl-dt-calendar-cell-content {
-      height: 86%; // adjust for the additional space taked for calendar weeks
+        height: 86%; // Учитываем дополнительное место для номеров недель
     }
   }
 }

@@ -9,68 +9,68 @@ import { Subject } from 'rxjs';
 export class OwlDateTimeIntl {
 
     /**
-     * Stream that emits whenever the labels here are changed. Use this to notify
-     * components if the labels have changed after initialization.
+     * Поток событий изменения подписей для уведомления
+     * компонентов об изменении подписей после инициализации
      */
     readonly changes: Subject<void> = new Subject<void>();
 
-    /** A label for the up second button (used by screen readers).  */
+    /** Подпись кнопки увеличения секунд для программ чтения с экрана  */
     upSecondLabel = 'Add a second';
 
-    /** A label for the down second button (used by screen readers).  */
+    /** Подпись кнопки уменьшения секунд для программ чтения с экрана  */
     downSecondLabel = 'Minus a second';
 
-    /** A label for the up minute button (used by screen readers).  */
+    /** Подпись кнопки увеличения минут для программ чтения с экрана  */
     upMinuteLabel = 'Add a minute';
 
-    /** A label for the down minute button (used by screen readers).  */
+    /** Подпись кнопки уменьшения минут для программ чтения с экрана  */
     downMinuteLabel = 'Minus a minute';
 
-    /** A label for the up hour button (used by screen readers).  */
+    /** Подпись кнопки увеличения часов для программ чтения с экрана  */
     upHourLabel = 'Add a hour';
 
-    /** A label for the down hour button (used by screen readers).  */
+    /** Подпись кнопки уменьшения часов для программ чтения с экрана  */
     downHourLabel = 'Minus a hour';
 
-    /** A label for the previous month button (used by screen readers). */
+    /** Подпись кнопки предыдущего месяца для программ чтения с экрана */
     prevMonthLabel = 'Previous month';
 
-    /** A label for the next month button (used by screen readers). */
+    /** Подпись кнопки следующего месяца для программ чтения с экрана */
     nextMonthLabel = 'Next month';
 
-    /** A label for the previous year button (used by screen readers). */
+    /** Подпись кнопки предыдущего года для программ чтения с экрана */
     prevYearLabel = 'Previous year';
 
-    /** A label for the next year button (used by screen readers). */
+    /** Подпись кнопки следующего года для программ чтения с экрана */
     nextYearLabel = 'Next year';
 
-    /** A label for the previous multi-year button (used by screen readers). */
+    /** Подпись кнопки предыдущей группы лет для программ чтения с экрана */
     prevMultiYearLabel = 'Previous 21 years';
 
-    /** A label for the next multi-year button (used by screen readers). */
+    /** Подпись кнопки следующей группы лет для программ чтения с экрана */
     nextMultiYearLabel = 'Next 21 years';
 
-    /** A label for the 'switch to month view' button (used by screen readers). */
+    /** Подпись кнопки перехода к представлению месяца для программ чтения с экрана */
     switchToMonthViewLabel = 'Change to month view';
 
-    /** A label for the 'switch to year view' button (used by screen readers). */
+    /** Подпись кнопки перехода к представлению года для программ чтения с экрана */
     switchToMultiYearViewLabel = 'Choose month and year';
 
-    /** A label for the cancel button */
+    /** Подпись кнопки отмены */
     cancelBtnLabel = 'Cancel';
 
-    /** A label for the set button */
+    /** Подпись кнопки подтверждения */
     setBtnLabel = 'Set';
 
-    /** A label for the range 'from' in picker info */
+    /** Подпись начала диапазона ('from') в информации о выбранных датах */
     rangeFromLabel = 'From';
 
-    /** A label for the range 'to' in picker info */
+    /** Подпись конца диапазона ('to') в информации о выбранных датах */
     rangeToLabel = 'To';
 
-    /** A label for the hour12 button (AM) */
+    /** Подпись кнопки AM в 12-часовом формате */
     hour12AMLabel = 'AM';
 
-    /** A label for the hour12 button (PM) */
+    /** Подпись кнопки PM в 12-часовом формате */
     hour12PMLabel = 'PM';
 }

@@ -1,6 +1,6 @@
 {
     "name": "@imihai/angular-datetime-picker",
-    "version": "22.0.8",
+    "version": "22.2.0",
     "description": "Angular Date Time Picker",
     "license": "MIT",
     "scripts": {
@@ -9,15 +9,18 @@
         "build": "ng build picker",
         "test": "ng test picker",
         "test:ci": "ng test --watch=false --no-progress --browsers=ChromeHeadlessCI --code-coverage=true picker",
-        "lint": "ng lint",
-        "e2e": "ng e2e",
+        "lint": "eslint projects/picker/src src e2e/src playwright.config.ts",
+        "e2e": "playwright test",
         "build_lib_onWindows": "ng build picker --configuration production",
         "build_lib_onLinux": "ng build picker --configuration production",
-        "build_css_onWindows": "mkdir \"dist/picker/assets/style\" && sass --style=compressed projects/picker/src/sass/picker.scss > dist/picker/assets/style/picker.min.css",
-        "build_css_onLinux": "mkdir -p dist/picker/assets/style && sass --style=compressed projects/picker/src/sass/picker.scss > dist/picker/assets/style/picker.min.css",
+        "build_css_onWindows": "sass --style=compressed --no-source-map projects/picker/src/sass/picker.scss dist/picker/assets/style/picker.min.css",
+        "build_css_onLinux": "sass --style=compressed --no-source-map projects/picker/src/sass/picker.scss dist/picker/assets/style/picker.min.css",
         "npm_pack": "cd dist/picker && npm pack",
         "package_windows": "npm run build_lib_onWindows && npm run build_css_onWindows && npm run npm_pack",
-        "package_linux": "npm run build_lib_onLinux && npm run build_css_onLinux && npm run npm_pack"
+        "package_linux": "npm run build_lib_onLinux && npm run build_css_onLinux && npm run npm_pack",
+        "e2e:ui": "playwright test --ui",
+        "e2e:typecheck": "tsc --noEmit -p e2e/tsconfig.e2e.json",
+        "test:demo": "ng test date-time-picker-app --watch=false --no-progress --browsers=ChromeHeadless"
     },
     "dependencies": {
         "@angular/cdk": "^22.0.7",
@@ -46,24 +49,21 @@
         "@angular/compiler-cli": "^22.0.8",
         "@angular/language-service": "^22.0.8",
         "@types/jasmine": "^5.1.9",
-        "@types/jasminewd2": "^2.0.13",
         "@types/node": "^26.1.1",
         "@typescript-eslint/eslint-plugin": "^8.54.0",
         "@typescript-eslint/parser": "^8.54.0",
         "codecov": "^3.8.3",
         "eslint": "^10.6.0",
         "jasmine-core": "~5.1.2",
-        "jasmine-spec-reporter": "~7.0.0",
         "karma": "~6.4.3",
         "karma-chrome-launcher": "^3.2.0",
         "karma-coverage": "^2.2.1",
         "karma-jasmine": "~5.1.0",
         "karma-jasmine-html-reporter": "^2.1.0",
         "ng-packagr": "^22.0.1",
-        "protractor": "~7.0.0",
         "sass": "^1.93.2",
-        "ts-node": "^10.9.2",
-        "typescript": "~6.0.3"
+        "typescript": "~6.0.3",
+        "@playwright/test": "1.64.0"
     },
     "overrides": {
         "@lmdb/lmdb-darwin-arm64": "3.0.12"
